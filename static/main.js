@@ -173,6 +173,29 @@ var typingDebounce = null;
         });
 
         document.getElementById('voice-recording-cancel').addEventListener('click', cancelVoiceRecording);
+
+        var dragCounter = 0;
+        document.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            dragCounter++;
+            showDragOverlay();
+        });
+        document.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) hideDragOverlay();
+        });
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dragCounter = 0;
+            hideDragOverlay();
+            if (!currentChatId) return;
+            var files = e.dataTransfer.files;
+            if (files.length > 0) sendFile(files[0]);
+        });
     }
 
     function loadChats() {
@@ -1021,6 +1044,19 @@ var typingDebounce = null;
             body: formData,
             credentials: 'same-origin'
         }).then(function (r) { return r.json(); });
+    }
+
+    function sendFile(file) {
+        uploadFile(file).then(function(data) {
+            if (data.error) { alert(data.error); return; }
+            socket.emit('send_message', {
+                chat_id: currentChatId,
+                file_url: data.file_url,
+                file_name: data.file_name,
+                file_type: data.file_type,
+                file_size: data.file_size
+            });
+        });
     }
 
     function showDragOverlay() {
