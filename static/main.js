@@ -1752,7 +1752,6 @@ var typingDebounce = null;
                 setTimeout(function () {
                     updateViewport();
                     scrollToBottom();
-                    messageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
             });
 
