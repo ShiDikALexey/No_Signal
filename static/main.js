@@ -1728,39 +1728,12 @@ var typingDebounce = null;
     }
 
     function initMobileViewport() {
-        if (!window.visualViewport) return;
-
-        var appContainer = document.querySelector('.app-container');
         var messageInput = document.getElementById('message-input');
-        var viewport = window.visualViewport;
-
-        function updateViewport() {
-            var height = viewport.height;
-            appContainer.style.height = height + 'px';
-
-            var chatArea = document.querySelector('.chat-area.mobile-show');
-            if (chatArea) {
-                chatArea.style.height = height + 'px';
-            }
-        }
-
-        viewport.addEventListener('resize', updateViewport);
-        viewport.addEventListener('scroll', updateViewport);
-
         if (messageInput) {
             messageInput.addEventListener('focus', function () {
-                setTimeout(function () {
-                    updateViewport();
-                    scrollToBottom();
-                }, 300);
-            });
-
-            messageInput.addEventListener('blur', function () {
-                setTimeout(updateViewport, 100);
+                setTimeout(scrollToBottom, 300);
             });
         }
-
-        updateViewport();
     }
 
     function loadSystemBanner() {
