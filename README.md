@@ -177,7 +177,6 @@
 | **PostgreSQL / SQLite** | PostgreSQL в production, SQLite для разработки |
 | **Let's Encrypt** | Автоматическое обновление SSL сертификатов |
 | **Flask-Limiter** | Rate limiting для защиты от abuse |
-| **Gmail SMTP** | Email-верификация для сброса пароля |
 | **Database indexes** | Оптимизация запросов для Message, User, UserChatSettings |
 
 ---
@@ -220,27 +219,172 @@
                                       └────────────────┘
 ```
 
-### Email-верификация
+---
 
-No_Signal использует Gmail SMTP для отправки писем (сброс пароля). Настройка:
+## Быстрый старт
 
-```env
-# .env
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your@gmail.com
-MAIL_PASSWORD=your-app-password
-MAIL_DEFAULT_SENDER=your@gmail.com
-```
+### Требования
+- Python 3.12+
+- pip
 
-Для получения пароля приложения:
-1. Включить 2FA в Google Account
-2. Создать пароль приложения: https://myaccount.google.com/apppasswords
+### Установка
 
-Тестовая отправка:
 ```bash
-python test_mail.py your@email.com
+# Клонировать
+git clone git@github.com:ShiDikALexey/No_Signal.git
+cd No_Signal
+
+# Виртуальное окружение
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
+# Зависимости
+pip install -r requirements.txt
+
+# Настройка окружения (опционально)
+cp .env.example .env
+# Отредактируйте .env и установите SECRET_KEY для production
+
+# Запуск
+python app.py
 ```
+
+Открой `http://localhost:8080` и зарегистрируйся.
+
+> По умолчанию используется SQLite. Для PostgreSQL установи `DATABASE_URL` в `.env`.
+> 
+> **Важно**: В production обязательно установите `SECRET_KEY` в `.env` файле!
+
+---
+
+## Деплой
+
+```bash
+# Production с Gunicorn
+pip install gunicorn psycopg2-binary
+
+# Запуск
+gunicorn --worker-class gthread --threads 20 -w 2 wsgi:app -b 127.0.0.1:8080
+```
+
+### Nginx
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name nosignal.su;
+
+    ssl_certificate     /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400s;
+    }
+
+    location /static/ {
+        alias /path/to/static/;
+        expires 30d;
+    }
+}
+```
+
+---
+
+## Использование
+
+### Основные возможности
+
+| Действие | Как |
+|----------|-----|
+| **Новый чат** | Кнопка `+` в сайдбаре → поиск пользователя или создание группы |
+| **Отправить сообщение** | Ввод текста + Enter или кнопка отправки |
+| **Прикрепить файл** | Кнопка 📎 или перетащите файл в окно |
+| **Голосовое сообщение** | Зажмите 🎤, говорите, отпустите |
+| **Emoji** | Кнопка 😊 в поле ввода |
+| **Контекстное меню чата** | ПКМ или долгое нажатие на мобильных |
+| **Профиль** | Клик по имени/аватару внизу сайдбара |
+| **Поиск** | Поле поиска в сайдбаре |
+| **Архив** | Кнопка архива в сайдбаре |
+
+### Админ-панель
+
+Доступна администраторам. Позволяет:
+- Публиковать и удалять системные оповещения
+- Просматривать список пользователей (ID, ник, email, роль, статус, last_seen)
+- Удалять пользователей
+
+---
+
+## Socket.IO API
+
+### Client → Server
+
+| Событие | Данные | Описание |
+|---------|--------|----------|
+| `join_chat` | `{ chat_id }` | Подключиться к комнате чата |
+| `send_message` | `{ chat_id, text?, file_url?, file_name?, file_type?, file_size? }` | Отправить сообщение |
+| `typing` | `{ chat_id }` | Пользователь печатает |
+| `stop_typing` | `{ chat_id }` | Пользователь перестал печатать |
+| `mark_read` | `{ chat_id }` | Пометить сообщения как прочитанные |
+
+### Server → Client
+
+| Событие | Данные | Описание |
+|---------|--------|----------|
+| `new_message` | `{ id, chat_id, sender_id, text, timestamp, file_url, ... }` | Новое сообщение |
+| `chat_updated` | `{ id, last_message, ... }` | Обновление чата |
+| `new_chat` | `{ id, name, ... }` | Новый чат создан |
+| `user_typing` | `{ chat_id, user_id, nickname }` | Пользователь печатает |
+| `user_online` | `{ user_id, nickname }` | Пользователь онлайн |
+| `user_offline` | `{ user_id, nickname }` | Пользователь офлайн |
+| `message_read` | `{ message_id, chat_id, reader_id }` | Сообщение прочитано |
+
+### REST API
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `GET` | `/api/chats` | Список чатов |
+| `GET` | `/api/chats/<id>/messages?limit=50&before=<id>` | Сообщения чата (cursor-based пагинация) |
+| `POST` | `/api/chats/private/<user_id>` | Создать личный чат |
+| `POST` | `/api/chats/group` | Создать групповой чат |
+| `POST` | `/api/upload` | Загрузить файл |
+| `GET` | `/api/users?q=<query>` | Поиск пользователей |
+| `GET` | `/api/users/online` | Список онлайн пользователей |
+| `POST` | `/api/chats/<id>/pin` | Закрепить/открепить |
+| `POST` | `/api/chats/<id>/archive` | Архивировать/разархивировать |
+| `POST` | `/api/chats/<id>/mute` | Включить/выключить звук |
+| `POST` | `/api/chats/<id>/clear` | Очистить историю |
+| `DELETE` | `/api/chats/<id>` | Удалить чат |
+
+---
+
+## Тесты
+
+```bash
+pip install pytest
+pytest tests/ -v
+```
+
+Текущий охват: 24 теста (авторизация, профиль, чаты, статика, per-user settings, пагинация, rate limiting, password reset).
+
+### Миграция с v0.3.x
+
+При обновлении с предыдущей версии запустите миграцию:
+
+```bash
+python migrate.py
+```
+
+Скрипт автоматически:
+- Добавит колонки `reset_token` и `reset_token_expires` в таблицу `user`
+- Создаст таблицу `user_chat_settings` для per-user настроек чатов
+- Мигрирует существующие настройки pin/archive/mute из глобальных в per-user
 
 ---
 
@@ -272,8 +416,6 @@ No_Signal следует принципам доступности:
 - ✅ **UX**: Custom confirm dialogs вместо confirm()
 - ✅ **UX**: Skeleton loaders при загрузке чатов и сообщений
 - ✅ **UX**: Markdown поддержка в сообщениях (bold, italic, code, links, strikethrough)
-- ✅ **Email**: Интеграция Gmail SMTP для сброса пароля (HTML-письма с брендингом)
-- ✅ **Infra**: python-dotenv для загрузки переменных окружения
 - ✅ **Accessibility**: ARIA атрибуты для всех интерактивных элементов
 - ✅ **Accessibility**: Keyboard navigation (Enter/Space для кнопок)
 - ✅ **Code quality**: Исправлен deprecated datetime.utcnow() на timezone-aware datetime.now(timezone.utc)
