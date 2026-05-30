@@ -105,8 +105,6 @@
         });
         document.getElementById('file-input').addEventListener('change', handleFileSelect);
         document.getElementById('new-chat-btn').addEventListener('click', showNewChatModal);
-        var friendsBtn = document.getElementById('friends-btn');
-        if (friendsBtn) friendsBtn.addEventListener('click', showFriendsModal);
         document.getElementById('modal-close').addEventListener('click', closeModal);
         document.getElementById('modal-overlay').addEventListener('click', function (e) {
             if (e.target === this) closeModal();
@@ -681,93 +679,6 @@ var typingDebounce = null;
         document.getElementById('create-group-btn').addEventListener('click', createGroupChat);
     }
 
-    function showFriendsModal() {
-        var overlay = document.getElementById('modal-overlay');
-        var title = document.getElementById('modal-title');
-        var content = document.getElementById('modal-content');
-
-        title.textContent = 'Друзья';
-        content.innerHTML =
-            '<div class="friends-modal-content">' +
-            '<div class="friends-search"><input type="text" id="friend-search" placeholder="Найти друга..." autocomplete="off"></div>' +
-            '<div class="friends-list" id="friends-list"></div>' +
-            '</div>';
-
-        overlay.classList.remove('hidden');
-
-        loadFriendsList();
-
-        document.getElementById('friend-search').addEventListener('input', function () {
-            loadFriendsList(this.value.trim());
-        });
-    }
-
-    function loadFriendsList(query) {
-        var list = document.getElementById('friends-list');
-        if (!list) return;
-
-        api('GET', '/api/friends').then(function (friends) {
-            if (!list) return;
-
-            if (friends.length === 0) {
-                list.innerHTML = '<div class="chat-list-empty">Нет друзей. Найдите пользователя через + и начните чат</div>';
-                return;
-            }
-
-            var filtered = friends;
-            if (query) {
-                filtered = friends.filter(function (f) {
-                    return f.nickname.toLowerCase().indexOf(query.toLowerCase()) !== -1;
-                });
-            }
-
-            if (filtered.length === 0) {
-                list.innerHTML = '<div class="chat-list-empty">Не найдено</div>';
-                return;
-            }
-
-            list.innerHTML = '';
-            filtered.forEach(function (f) {
-                var item = document.createElement('div');
-                item.className = 'user-list-item';
-                var avatarHtml;
-                if (f.avatar_photo) {
-                    avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(f.avatar_color) + '"><img src="' + escapeHtml(f.avatar_photo) + '" class="avatar-photo"></div>';
-                } else {
-                    avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(f.avatar_color) + '">' + escapeHtml(f.nickname.charAt(0).toUpperCase()) + '</div>';
-                }
-                item.innerHTML =
-                    avatarHtml +
-                    '<div class="user-item-info">' +
-                    '<div class="user-item-nickname">' + escapeHtml(f.nickname) + (f.is_online ? ' <span class="online-dot"></span>' : '') + '</div>' +
-                    '<div class="user-item-status' + (f.is_online ? ' online' : '') + '">' + (f.is_online ? 'В сети' : 'Не в сети') + '</div>' +
-                    '</div>' +
-                    '<button class="friend-remove-btn" data-friend-id="' + f.id + '" title="Удалить">&times;</button>';
-                item.addEventListener('click', function () {
-                    startPrivateChat(f.id);
-                });
-                item.querySelector('.friend-remove-btn').addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    removeFriend(f.id, f.nickname);
-                });
-                list.appendChild(item);
-            });
-        }).catch(function () {
-            if (list) list.innerHTML = '<div class="chat-list-empty">Ошибка загрузки</div>';
-        });
-    }
-
-    function removeFriend(friendId, nickname) {
-        if (!confirm('Удалить ' + nickname + ' из друзей?')) return;
-        api('DELETE', '/api/friends/' + friendId).then(function (result) {
-            if (result.error) {
-                alert(result.error);
-                return;
-            }
-            loadFriendsList();
-        });
-    }
-
     function loadUsersForPrivateChat(query) {
         var list = document.getElementById('user-list');
         if (!list) return;
@@ -802,33 +713,14 @@ var typingDebounce = null;
                     '<div class="user-item-info">' +
                     '<div class="user-item-nickname">' + escapeHtml(u.nickname) + (u.is_online ? ' <span class="online-dot"></span>' : '') + '</div>' +
                     '<div class="user-item-status' + (u.is_online ? ' online' : '') + '">' + (u.is_online ? 'В сети' : 'Не в сети') + '</div>' +
-                    '</div>' +
-                    '<button class="friend-add-btn" data-user-id="' + u.id + '" data-user-name="' + escapeHtml(u.nickname) + '" title="Добавить в друзья">+</button>';
+                    '</div>';
                 item.addEventListener('click', function () {
                     startPrivateChat(u.id);
-                });
-                item.querySelector('.friend-add-btn').addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    addFriend(u.id, u.nickname, this);
                 });
                 list.appendChild(item);
             });
         }).catch(function () {
             if (list) list.innerHTML = '<div class="chat-list-empty">Ошибка загрузки</div>';
-        });
-    }
-
-    function addFriend(userId, nickname, btn) {
-        api('POST', '/api/friends/' + userId).then(function (result) {
-            if (result.error) {
-                alert(result.error);
-                return;
-            }
-            if (btn) {
-                btn.textContent = '✓';
-                btn.classList.add('friend-added');
-                btn.disabled = true;
-            }
         });
     }
 

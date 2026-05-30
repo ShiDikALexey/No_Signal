@@ -23,13 +23,6 @@ chat_members = db.Table(
     db.Column('chat_id', db.Integer, db.ForeignKey('chat.id'), primary_key=True)
 )
 
-friendships = db.Table(
-    'friendship',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('friend_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('created_at', db.DateTime, default=datetime.utcnow)
-)
-
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,14 +34,6 @@ class User(UserMixin, db.Model):
     status = db.Column(db.String(100), nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-
-    friends = db.relationship('User',
-        secondary=friendships,
-        primaryjoin=(friendships.c.user_id == id),
-        secondaryjoin=(friendships.c.friend_id == id),
-        backref='friend_of',
-        lazy='dynamic'
-    )
 
     def to_dict(self):
         is_online = (datetime.utcnow() - self.last_seen).total_seconds() < 180
