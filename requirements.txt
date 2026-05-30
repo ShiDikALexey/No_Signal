@@ -2,6 +2,7 @@ flask
 flask-socketio
 flask-sqlalchemy
 flask-login
+flask-limiter
 cryptography
 gunicorn
 eventlet
@@ -9,3 +10,4 @@ gevent
 gevent-websocket
 psycopg2-binary
 psycogreen
+python-dotenv

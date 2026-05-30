@@ -360,7 +360,21 @@ pytest tests/ -v
 
 ## Changelog
 
-### v0.3.0 (текущий)
+### v0.4.0 (текущий)
+- ✅ **Безопасность**: Убран hardcoded admin email
+- ✅ **Безопасность**: SECRET_KEY теперь генерируется автоматически или берётся из .env
+- ✅ **Безопасность**: Добавлен Flask-Limiter для rate limiting на критические endpoints
+- ✅ **Безопасность**: Сброс пароля теперь требует email verification с токеном
+- ✅ **Безопасность**: Добавлена проверка доступа к загруженным файлам
+- ✅ **Архитектура**: Per-user настройки чатов (pin, archive, mute) через UserChatSettings
+- ✅ **Производительность**: Пагинация сообщений с cursor-based загрузкой
+- ✅ **Производительность**: Оптимизирован запрос списка чатов
+- ✅ **UX**: Toast notifications вместо alert()
+- ✅ **UX**: Custom confirm dialogs вместо confirm()
+- ✅ **Code quality**: Исправлен deprecated datetime.utcnow() на timezone-aware datetime.now(timezone.utc)
+- ✅ **Миграция**: Создан скрипт migrate.py для переноса данных в новую схему
+
+### v0.3.0
 - ✅ Drag & drop файлов — перетащите файл в окно для отправки
 - ✅ Система друзей полностью удалена
 - ✅ Полностью переписан README

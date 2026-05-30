@@ -27,6 +27,65 @@
         return div.innerHTML;
     }
 
+    function showToast(message, type) {
+        type = type || 'info';
+        var container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        var toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.innerHTML = '<span class="toast-message">' + escapeHtml(message) + '</span>' +
+            '<button class="toast-close">&times;</button>';
+
+        container.appendChild(toast);
+
+        var closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', function() {
+            toast.remove();
+        });
+
+        setTimeout(function() {
+            toast.classList.add('toast-hiding');
+            setTimeout(function() {
+                toast.remove();
+            }, 300);
+        }, 4000);
+    }
+
+    function showConfirm(message, onConfirm) {
+        var overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = '<div class="confirm-dialog">' +
+            '<div class="confirm-message">' + escapeHtml(message) + '</div>' +
+            '<div class="confirm-buttons">' +
+            '<button class="confirm-btn confirm-btn-cancel">Отмена</button>' +
+            '<button class="confirm-btn confirm-btn-ok">Подтвердить</button>' +
+            '</div></div>';
+
+        document.body.appendChild(overlay);
+
+        var cancelBtn = overlay.querySelector('.confirm-btn-cancel');
+        var okBtn = overlay.querySelector('.confirm-btn-ok');
+
+        cancelBtn.addEventListener('click', function() {
+            overlay.remove();
+        });
+
+        okBtn.addEventListener('click', function() {
+            overlay.remove();
+            if (onConfirm) onConfirm();
+        });
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
+    }
+
     function api(method, url, data) {
         var opts = {
             method: method,
@@ -342,7 +401,8 @@ var typingDebounce = null;
         var chat = chats.find(function (c) { return c.id === chatId; });
         if (chat) updateChatHeader(chat);
 
-        api('GET', '/api/chats/' + chatId + '/messages').then(function (messages) {
+        api('GET', '/api/chats/' + chatId + '/messages').then(function (data) {
+            var messages = data.messages || data;
             renderMessages(messages, chat ? chat.is_group : false);
         });
 
@@ -526,7 +586,7 @@ var typingDebounce = null;
 
             uploadFile(pendingFile).then(function (result) {
                 if (result.error) {
-                    alert(result.error);
+                    showToast(result.error, 'error');
                     removeFilePreview();
                     return;
                 }
@@ -832,7 +892,7 @@ var typingDebounce = null;
     function startPrivateChat(userId) {
         api('POST', '/api/chats/private/' + userId).then(function (chat) {
             if (chat.error) {
-                alert(chat.error);
+                showToast(chat.error, 'error');
                 return;
             }
             closeModal();
@@ -853,7 +913,7 @@ var typingDebounce = null;
 
         api('POST', '/api/chats/group', { name: name, members: members }).then(function (chat) {
             if (chat.error) {
-                alert(chat.error);
+                showToast(chat.error, 'error');
                 return;
             }
             closeModal();
@@ -1048,7 +1108,7 @@ var typingDebounce = null;
 
     function sendFile(file) {
         uploadFile(file).then(function(data) {
-            if (data.error) { alert(data.error); return; }
+            if (data.error) { showToast(data.error, 'error'); return; }
             socket.emit('send_message', {
                 chat_id: currentChatId,
                 file_url: data.file_url,
@@ -1201,24 +1261,28 @@ var typingDebounce = null;
                 loadChats();
             });
         } else if (action === 'clear') {
-            if (!confirm('Очистить всю историю сообщений?')) return;
-            api('POST', '/api/chats/' + chat.id + '/clear').then(function (result) {
-                if (result.error) return;
-                if (currentChatId === chat.id) {
-                    renderMessages([]);
-                }
-                loadChats();
+            showConfirm('Очистить всю историю сообщений?', function() {
+                api('POST', '/api/chats/' + chat.id + '/clear').then(function (result) {
+                    if (result.error) return;
+                    if (currentChatId === chat.id) {
+                        renderMessages([]);
+                    }
+                    loadChats();
+                    showToast('История очищена', 'success');
+                });
             });
         } else if (action === 'delete') {
-            if (!confirm('Удалить этот чат?')) return;
-            api('DELETE', '/api/chats/' + chat.id).then(function (result) {
-                if (result.error) return;
-                if (currentChatId === chat.id) {
-                    currentChatId = null;
-                    document.getElementById('chat-area').classList.remove('active');
-                    document.getElementById('no-chat-selected').classList.remove('hidden');
-                }
-                loadChats();
+            showConfirm('Удалить этот чат?', function() {
+                api('DELETE', '/api/chats/' + chat.id).then(function (result) {
+                    if (result.error) return;
+                    if (currentChatId === chat.id) {
+                        currentChatId = null;
+                        document.getElementById('chat-area').classList.remove('active');
+                        document.getElementById('no-chat-selected').classList.remove('hidden');
+                    }
+                    loadChats();
+                    showToast('Чат удалён', 'success');
+                });
             });
         }
     }
@@ -1282,13 +1346,14 @@ var typingDebounce = null;
             }
             api('POST', '/auth/api/profile/nickname', { nickname: newNickname }).then(function (result) {
                 if (result.error) {
-                    alert(result.error);
+                    showToast(result.error, 'error');
                     return;
                 }
                 currentUser.nickname = result.nickname;
                 window.CURRENT_USER.nickname = result.nickname;
                 renderCurrentUser();
                 closeModal();
+                showToast('Никнейм изменён', 'success');
             });
         });
 
@@ -1390,13 +1455,14 @@ var typingDebounce = null;
                     credentials: 'same-origin'
                 }).then(function (r) { return r.json(); }).then(function (result) {
                     if (result.error) {
-                        alert(result.error);
+                        showToast(result.error, 'error');
                         return;
                     }
                     currentUser.avatarPhoto = result.avatar_photo;
                     window.CURRENT_USER.avatarPhoto = result.avatar_photo;
                     renderCurrentUser();
                     showAccountSettings();
+                    showToast('Фото обновлено', 'success');
                 });
             });
 
@@ -1405,13 +1471,14 @@ var typingDebounce = null;
                 deleteAvatarBtn.addEventListener('click', function () {
                     api('DELETE', '/auth/api/profile/avatar-photo').then(function (result) {
                         if (result.error) {
-                            alert(result.error);
+                            showToast(result.error, 'error');
                             return;
                         }
                         currentUser.avatarPhoto = '';
                         window.CURRENT_USER.avatarPhoto = '';
                         renderCurrentUser();
                         showAccountSettings();
+                        showToast('Фото удалено', 'success');
                     });
                 });
             }
@@ -1420,12 +1487,12 @@ var typingDebounce = null;
                 var status = document.getElementById('settings-status').value.trim();
                 api('POST', '/auth/api/profile/status', { status: status }).then(function (result) {
                     if (result.error) {
-                        alert(result.error);
+                        showToast(result.error, 'error');
                         return;
                     }
                     currentUser.status = result.status;
                     window.CURRENT_USER.status = result.status;
-                    alert('Статус обновлён');
+                    showToast('Статус обновлён', 'success');
                 });
             });
 
@@ -1434,7 +1501,7 @@ var typingDebounce = null;
                     var color = this.dataset.color;
                     api('POST', '/auth/api/profile/avatar-color', { color: color }).then(function (result) {
                         if (result.error) {
-                            alert(result.error);
+                            showToast(result.error, 'error');
                             return;
                         }
                         currentUser.avatarColor = result.avatar_color;
@@ -1459,10 +1526,10 @@ var typingDebounce = null;
                     confirm_password: confirmPwd
                 }).then(function (result) {
                     if (result.error) {
-                        alert(result.error);
+                        showToast(result.error, 'error');
                         return;
                     }
-                    alert('Пароль успешно изменён');
+                    showToast('Пароль успешно изменён', 'success');
                     document.getElementById('settings-old-password').value = '';
                     document.getElementById('settings-new-password').value = '';
                     document.getElementById('settings-confirm-password').value = '';
@@ -1472,17 +1539,17 @@ var typingDebounce = null;
             document.getElementById('delete-account-btn').addEventListener('click', function () {
                 var pwd = document.getElementById('settings-delete-password').value;
                 if (!pwd) {
-                    alert('Введите пароль');
+                    showToast('Введите пароль', 'error');
                     return;
                 }
-                if (!confirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо!')) return;
-
-                api('POST', '/auth/api/profile/delete', { password: pwd }).then(function (result) {
-                    if (result.error) {
-                        alert(result.error);
-                        return;
-                    }
-                    window.location.href = '/auth/login';
+                showConfirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо!', function() {
+                    api('POST', '/auth/api/profile/delete', { password: pwd }).then(function (result) {
+                        if (result.error) {
+                            showToast(result.error, 'error');
+                            return;
+                        }
+                        window.location.href = '/auth/login';
+                    });
                 });
             });
         });
@@ -1530,7 +1597,7 @@ var typingDebounce = null;
             })
             .catch(function(err) {
                 console.error('Ошибка доступа к микрофону:', err);
-                alert('Не удалось получить доступ к микрофону');
+                showToast('Не удалось получить доступ к микрофону', 'error');
             });
     }
 
@@ -1623,7 +1690,7 @@ var typingDebounce = null;
         .then(function(r) { return r.json(); })
         .then(function(result) {
             if (result.error) {
-                alert(result.error);
+                showToast(result.error, 'error');
                 return;
             }
 
@@ -1836,17 +1903,17 @@ var typingDebounce = null;
 
         publishBtn.addEventListener('click', function() {
             var text = textarea.value.trim();
-            if (!text) { alert('Введите текст оповещения'); return; }
+            if (!text) { showToast('Введите текст оповещения', 'error'); return; }
             api('POST', '/auth/api/announcement', { text: text }).then(function(r) {
-                if (r.error) { alert(r.error); return; }
-                alert('Оповещение опубликовано!');
+                if (r.error) { showToast(r.error, 'error'); return; }
+                showToast('Оповещение опубликовано!', 'success');
                 overlay.classList.add('hidden');
             });
         });
 
         deleteBtn.addEventListener('click', function() {
             api('DELETE', '/auth/api/announcement').then(function() {
-                alert('Оповещение удалено');
+                showToast('Оповещение удалено', 'success');
                 overlay.classList.add('hidden');
             });
         });
@@ -1871,10 +1938,12 @@ var typingDebounce = null;
                 btn.addEventListener('click', function() {
                     var uid = this.dataset.uid;
                     var name = this.dataset.name;
-                    if (!confirm('Удалить пользователя ' + name + '? Все его чаты и сообщения будут удалены.')) return;
-                    api('DELETE', '/auth/api/admin/users/' + uid).then(function(r) {
-                        if (r.error) { alert(r.error); return; }
-                        showAdminPanel();
+                    showConfirm('Удалить пользователя ' + name + '? Все его чаты и сообщения будут удалены.', function() {
+                        api('DELETE', '/auth/api/admin/users/' + uid).then(function(r) {
+                            if (r.error) { showToast(r.error, 'error'); return; }
+                            showToast('Пользователь удалён', 'success');
+                            showAdminPanel();
+                        });
                     });
                 });
             });
