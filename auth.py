@@ -1,0 +1,237 @@
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
+from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from models import User, AVATAR_COLORS, Chat, Message
+from extensions import db
+from config import BASE_DIR
+import random
+import os
+import uuid
+
+auth = Blueprint('auth', __name__, url_prefix='/auth')
+
+
+@auth.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('chat.index'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user, remember=True)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('chat.index'))
+        else:
+            flash('Неверный email или пароль', 'error')
+
+    return render_template('login.html')
+
+
+@auth.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('chat.index'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        nickname = request.form.get('nickname', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        errors = []
+        if not email or not nickname or not password:
+            errors.append('Заполните все поля')
+        if len(nickname) < 2:
+            errors.append('Никнейм должен быть не менее 2 символов')
+        if len(password) < 6:
+            errors.append('Пароль должен быть не менее 6 символов')
+        if password != confirm_password:
+            errors.append('Пароли не совпадают')
+        if User.query.filter_by(email=email).first():
+            errors.append('Этот email уже зарегистрирован')
+        if User.query.filter_by(nickname=nickname).first():
+            errors.append('Этот никнейм уже занят')
+
+        if errors:
+            for e in errors:
+                flash(e, 'error')
+        else:
+            user = User(
+                email=email,
+                nickname=nickname,
+                password_hash=generate_password_hash(password),
+                avatar_color=random.choice(AVATAR_COLORS)
+            )
+            db.session.add(user)
+            db.session.commit()
+            login_user(user, remember=True)
+            return redirect(url_for('chat.index'))
+
+    return render_template('register.html')
+
+
+@auth.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('auth.login'))
+
+
+@auth.route('/api/profile')
+@login_required
+def get_profile():
+    return jsonify({
+        'id': current_user.id,
+        'email': current_user.email,
+        'nickname': current_user.nickname,
+        'avatar_color': current_user.avatar_color,
+        'avatar_photo': current_user.avatar_photo,
+        'status': current_user.status,
+        'avatar_colors': AVATAR_COLORS
+    })
+
+
+@auth.route('/api/profile/nickname', methods=['POST'])
+@login_required
+def change_nickname():
+    data = request.json or {}
+    nickname = data.get('nickname', '').strip()
+
+    if len(nickname) < 2:
+        return jsonify({'error': 'Никнейм должен быть не менее 2 символов'}), 400
+
+    if User.query.filter(User.nickname == nickname, User.id != current_user.id).first():
+        return jsonify({'error': 'Этот никнейм уже занят'}), 400
+
+    current_user.nickname = nickname
+    db.session.commit()
+    return jsonify({'nickname': nickname})
+
+
+@auth.route('/api/profile/password', methods=['POST'])
+@login_required
+def change_password():
+    data = request.json or {}
+    old_password = data.get('old_password', '')
+    new_password = data.get('new_password', '')
+    confirm_password = data.get('confirm_password', '')
+
+    if not check_password_hash(current_user.password_hash, old_password):
+        return jsonify({'error': 'Неверный текущий пароль'}), 400
+
+    if len(new_password) < 6:
+        return jsonify({'error': 'Пароль должен быть не менее 6 символов'}), 400
+
+    if new_password != confirm_password:
+        return jsonify({'error': 'Пароли не совпадают'}), 400
+
+    current_user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@auth.route('/api/profile/avatar-color', methods=['POST'])
+@login_required
+def change_avatar_color():
+    data = request.json or {}
+    color = data.get('color', '')
+
+    if color not in AVATAR_COLORS:
+        return jsonify({'error': 'Недопустимый цвет'}), 400
+
+    current_user.avatar_color = color
+    db.session.commit()
+    return jsonify({'avatar_color': color})
+
+
+@auth.route('/api/profile/status', methods=['POST'])
+@login_required
+def change_status():
+    data = request.json or {}
+    status = data.get('status', '').strip()
+
+    if len(status) > 100:
+        return jsonify({'error': 'Статус слишком длинный'}), 400
+
+    current_user.status = status if status else None
+    db.session.commit()
+    return jsonify({'status': current_user.status})
+
+
+@auth.route('/api/profile/delete', methods=['POST'])
+@login_required
+def delete_account():
+    data = request.json or {}
+    password = data.get('password', '')
+
+    if not check_password_hash(current_user.password_hash, password):
+        return jsonify({'error': 'Неверный пароль'}), 400
+
+    user_id = current_user.id
+
+    user_chats = Chat.query.filter(Chat.members.any(User.id == user_id)).all()
+    for chat in user_chats:
+        Message.query.filter_by(chat_id=chat.id).delete()
+        chat.members.remove(current_user)
+        if len(chat.members) == 0:
+            db.session.delete(chat)
+
+    db.session.delete(current_user)
+    db.session.commit()
+    logout_user()
+    return jsonify({'success': True})
+
+
+@auth.route('/api/profile/avatar-photo', methods=['POST'])
+@login_required
+def upload_avatar_photo():
+    if 'file' not in request.files:
+        return jsonify({'error': 'Файл не найден'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Файл не выбран'}), 400
+
+    allowed = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed:
+        return jsonify({'error': 'Допустимы только изображения (png, jpg, gif, webp)'}), 400
+
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+
+    original_name = secure_filename(file.filename) or 'avatar'
+    unique_name = 'avatar_' + str(uuid.uuid4())[:8] + '_' + original_name
+    file_path = os.path.join(upload_folder, unique_name)
+    file.save(file_path)
+
+    if current_user.avatar_photo:
+        old_path = os.path.join(BASE_DIR, current_user.avatar_photo.lstrip('/'))
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except Exception:
+                pass
+
+    current_user.avatar_photo = '/uploads/' + unique_name
+    db.session.commit()
+    return jsonify({'avatar_photo': current_user.avatar_photo})
+
+
+@auth.route('/api/profile/avatar-photo', methods=['DELETE'])
+@login_required
+def delete_avatar_photo():
+    if current_user.avatar_photo:
+        old_path = os.path.join(BASE_DIR, current_user.avatar_photo.lstrip('/'))
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except Exception:
+                pass
+    current_user.avatar_photo = None
+    db.session.commit()
+    return jsonify({'avatar_photo': None})

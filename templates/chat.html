@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}No_Signal{% endblock %}
+{% block content %}
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="/static/favicon.svg" alt="" class="logo-icon">
+                <span>No_Signal</span>
+            </div>
+            <button class="icon-btn" id="new-chat-btn" title="Новый чат">+</button>
+        </div>
+        <div class="sidebar-search">
+            <input type="text" id="search-input" placeholder="Поиск чатов..." autocomplete="off">
+        </div>
+        <div class="archive-btn-wrapper" id="archive-btn-wrapper">
+            <button class="archive-btn" id="archive-btn">
+                <span class="archive-btn-icon">📥</span>
+                <span>Архив</span>
+                <span class="archive-btn-count hidden" id="archive-count"></span>
+            </button>
+        </div>
+        <div class="chat-list" id="chat-list">
+            <div class="chat-list-empty" id="chat-list-empty">Нет чатов. Нажмите + чтобы начать</div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-info" id="user-info-trigger">
+                <div class="chat-avatar small" id="my-avatar"></div>
+                <span class="user-nickname" id="my-nickname"></span>
+            </div>
+            <a href="/auth/logout" class="logout-btn" title="Выйти">&#10006;</a>
+        </div>
+        <div class="profile-dropdown hidden" id="profile-dropdown">
+            <div class="profile-dropdown-header">
+                <div class="chat-avatar" id="dropdown-avatar"></div>
+                <div class="profile-dropdown-info">
+                    <div class="profile-dropdown-name" id="dropdown-name"></div>
+                    <div class="profile-dropdown-status" id="dropdown-status"></div>
+                </div>
+            </div>
+            <div class="profile-dropdown-divider"></div>
+            <button class="profile-dropdown-item" id="btn-change-nickname">
+                <span class="profile-dropdown-icon">✏️</span>
+                <span>Сменить никнейм</span>
+            </button>
+            <button class="profile-dropdown-item" id="btn-account-settings">
+                <span class="profile-dropdown-icon">⚙️</span>
+                <span>Данные аккаунта</span>
+            </button>
+            <div class="profile-dropdown-divider"></div>
+            <a href="/auth/logout" class="profile-dropdown-item profile-dropdown-logout">
+                <span class="profile-dropdown-icon">🚪</span>
+                <span>Выйти</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="chat-area" id="chat-area">
+        <div class="chat-header" id="chat-header">
+            <button class="back-btn" id="back-btn">&#8592;</button>
+            <div id="chat-header-info"></div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="typing-indicator hidden" id="typing-indicator"></div>
+
+        <div class="input-area">
+            <button class="attach-btn" id="attach-btn" title="Прикрепить файл">📎</button>
+            <input type="file" id="file-input" hidden>
+            <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off" maxlength="2000">
+            <button class="emoji-btn" id="emoji-btn" title="Эмодзи">😊</button>
+            <button class="voice-btn hidden" id="voice-btn" title="Голосовое сообщение">🎤</button>
+            <button id="send-btn" title="Отправить">>></button>
+        </div>
+        <div class="file-preview hidden" id="file-preview"></div>
+        <div class="emoji-picker hidden" id="emoji-picker"></div>
+        <div class="voice-recording-overlay hidden" id="voice-recording-overlay">
+            <div class="voice-recording-content">
+                <div class="voice-recording-indicator">
+                    <span class="recording-dot"></span>
+                    <span class="recording-time" id="recording-time">00:00</span>
+                </div>
+                <div class="voice-waveform" id="voice-waveform"></div>
+                <div class="voice-recording-hint">Отпустите для отправки, свайп вверх для отмены</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="no-chat-selected" id="no-chat-selected">
+        <div class="no-chat-content">
+            <div class="no-chat-icon">&#128172;</div>
+            <h2>No_Signal</h2>
+            <p>Выберите чат или создайте новый</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <h2 id="modal-title">Новый чат</h2>
+            <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div id="modal-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/socket.io.min.js"></script>
+<script>
+window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nickname: "{{ current_user.nickname }}",
+    avatarColor: "{{ current_user.avatar_color }}",
+    avatarPhoto: "{{ current_user.avatar_photo or '' }}",
+    status: "{{ current_user.status or '' }}"
+};
+</script>
+<script src="/static/main.js"></script>
+{% endblock %}
