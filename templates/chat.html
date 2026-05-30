@@ -8,7 +8,10 @@
                 <img src="/static/favicon.svg" alt="" class="logo-icon">
                 <span>No_Signal</span>
             </div>
-            <button class="icon-btn" id="new-chat-btn" title="Новый чат">+</button>
+            <div class="sidebar-actions">
+                <button class="icon-btn" id="friends-btn" title="Друзья">👥</button>
+                <button class="icon-btn" id="new-chat-btn" title="Новый чат">+</button>
+            </div>
         </div>
         <div class="sidebar-search">
             <input type="text" id="search-input" placeholder="Поиск чатов..." autocomplete="off">
@@ -28,7 +31,6 @@
                 <div class="chat-avatar small" id="my-avatar"></div>
                 <span class="user-nickname" id="my-nickname"></span>
             </div>
-            <a href="/auth/logout" class="logout-btn" title="Выйти">&#10006;</a>
         </div>
         <div class="profile-dropdown hidden" id="profile-dropdown">
             <div class="profile-dropdown-header">
@@ -59,6 +61,9 @@
         <div class="chat-header" id="chat-header">
             <button class="back-btn" id="back-btn">&#8592;</button>
             <div id="chat-header-info"></div>
+            <div class="chat-header-profile" id="chat-header-profile" title="Профиль">
+                <div class="chat-avatar small" id="chat-header-my-avatar"></div>
+            </div>
         </div>
 
         <div class="messages" id="messages"></div>

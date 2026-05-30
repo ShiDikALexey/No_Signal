@@ -194,6 +194,12 @@ a:hover {
     flex-shrink: 0;
 }
 
+.sidebar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .logo {
     font-size: 1.4em;
     font-weight: 800;
@@ -771,6 +777,85 @@ a:hover {
     background: var(--bg-hover);
 }
 
+.friends-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.friends-search input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.friends-search input:focus {
+    border-color: var(--accent);
+}
+
+.friends-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.friend-remove-btn {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+}
+
+.friend-remove-btn:hover {
+    color: var(--danger);
+    background: rgba(233, 69, 96, 0.1);
+}
+
+.friend-add-btn {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--accent);
+    font-size: 1.1em;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.friend-add-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.friend-add-btn.friend-added {
+    border-color: var(--success);
+    color: var(--success);
+    cursor: default;
+}
+
 .archive-btn-icon {
     font-size: 1.1em;
 }
@@ -893,6 +978,19 @@ a:hover {
 .header-chat-status {
     font-size: 0.8em;
     color: var(--text-secondary);
+}
+
+.chat-header-profile {
+    display: none;
+    margin-left: auto;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+
+.chat-header-profile:hover {
+    background: var(--bg-hover);
 }
 
 .messages {
@@ -1033,6 +1131,24 @@ a:hover {
     color: rgba(255, 255, 255, 0.55);
     text-align: right;
     margin-top: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+}
+
+.msg-status {
+    font-size: 0.85em;
+    letter-spacing: -2px;
+    line-height: 1;
+}
+
+.msg-status-sent {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.msg-status-read {
+    color: #58a6ff;
 }
 
 .message.other .msg-time {
@@ -1490,13 +1606,37 @@ a:hover {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.92);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 300;
     cursor: pointer;
     animation: fadeIn 0.2s ease;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1.8em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    z-index: 301;
+    line-height: 1;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .image-lightbox img {
@@ -1934,6 +2074,10 @@ a:hover {
 
     .back-btn {
         display: block;
+    }
+
+    .chat-header-profile {
+        display: flex;
     }
 
     .app-container {

@@ -117,3 +117,24 @@ def register_socket_handlers(socketio):
             'chat_id': chat_id,
             'user_id': current_user.id
         }, room=f'chat_{chat_id}', include_self=False)
+
+    @socketio.on('mark_read')
+    def on_mark_read(data):
+        if not current_user.is_authenticated:
+            return
+        chat_id = data.get('chat_id')
+        if not chat_id:
+            return
+        messages = Message.query.filter_by(
+            chat_id=chat_id,
+            is_read=False
+        ).filter(Message.sender_id != current_user.id).all()
+        for msg in messages:
+            msg.is_read = True
+        db.session.commit()
+        for msg in messages:
+            emit('message_read', {
+                'message_id': msg.id,
+                'chat_id': chat_id,
+                'reader_id': current_user.id
+            }, room=f'user_{msg.sender_id}')

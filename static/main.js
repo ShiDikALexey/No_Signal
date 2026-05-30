@@ -78,6 +78,7 @@
         socket.on('user_stopped_typing', onUserStoppedTyping);
         socket.on('user_online', onUserOnline);
         socket.on('user_offline', onUserOffline);
+        socket.on('message_read', onMessageRead);
     }
 
     function renderCurrentUser() {
@@ -104,6 +105,8 @@
         });
         document.getElementById('file-input').addEventListener('change', handleFileSelect);
         document.getElementById('new-chat-btn').addEventListener('click', showNewChatModal);
+        var friendsBtn = document.getElementById('friends-btn');
+        if (friendsBtn) friendsBtn.addEventListener('click', showFriendsModal);
         document.getElementById('modal-close').addEventListener('click', closeModal);
         document.getElementById('modal-overlay').addEventListener('click', function (e) {
             if (e.target === this) closeModal();
@@ -124,6 +127,12 @@
             document.getElementById('sidebar').classList.remove('mobile-hidden');
             document.getElementById('no-chat-selected').classList.remove('hidden');
         });
+        var chatHeaderProfile = document.getElementById('chat-header-profile');
+        if (chatHeaderProfile) {
+            chatHeaderProfile.addEventListener('click', function () {
+                toggleProfileDropdown();
+            });
+        }
         document.getElementById('message-input').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -313,10 +322,11 @@ var typingDebounce = null;
         if (chat) updateChatHeader(chat);
 
         api('GET', '/api/chats/' + chatId + '/messages').then(function (messages) {
-            renderMessages(messages);
+            renderMessages(messages, chat ? chat.is_group : false);
         });
 
         socket.emit('join_chat', { chat_id: chatId });
+        socket.emit('mark_read', { chat_id: chatId });
 
         document.getElementById('message-input').focus();
         hideTypingIndicator();
@@ -325,9 +335,15 @@ var typingDebounce = null;
     function updateChatHeader(chat) {
         var info = document.getElementById('chat-header-info');
         var letter = chat.name.charAt(0).toUpperCase();
+        var avatarHtml;
+        if (chat.avatar_photo) {
+            avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(chat.avatar_color) + '"><img src="' + escapeHtml(chat.avatar_photo) + '" class="avatar-photo"></div>';
+        } else {
+            avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(chat.avatar_color) + '">' + escapeHtml(letter) + '</div>';
+        }
         info.innerHTML =
             '<div class="header-chat-info">' +
-            '<div class="chat-avatar small" style="background-color:' + escapeHtml(chat.avatar_color) + '">' + escapeHtml(letter) + '</div>' +
+            avatarHtml +
             '<div>' +
             '<div class="header-chat-name">' + escapeHtml(chat.name) + '</div>' +
             '<div class="header-chat-status" id="header-status">' +
@@ -335,11 +351,9 @@ var typingDebounce = null;
             '</div>' +
             '</div>' +
             '</div>';
-
-
     }
 
-    function renderMessages(messages) {
+    function renderMessages(messages, isGroup) {
         var container = document.getElementById('messages');
         container.innerHTML = '';
         var lastDate = null;
@@ -354,7 +368,7 @@ var typingDebounce = null;
             }
 
             var isGrouped = (msg.sender_id === lastSenderId);
-            appendMessage(msg, false, isGrouped);
+            appendMessage(msg, false, isGrouped, isGroup);
             lastSenderId = msg.sender_id;
         });
         scrollToBottom();
@@ -384,7 +398,7 @@ var typingDebounce = null;
         container.appendChild(div);
     }
 
-    function appendMessage(msg, animate, isGrouped) {
+    function appendMessage(msg, animate, isGrouped, isGroup) {
         var container = document.getElementById('messages');
         if (!container) return;
 
@@ -395,10 +409,19 @@ var typingDebounce = null;
 
         if (isOwn) {
             div.className = 'message own' + groupedClass;
+            div.dataset.msgId = msg.id;
+            var statusHtml = '';
+            if (!isGroup) {
+                if (msg.is_read) {
+                    statusHtml = '<span class="msg-status msg-status-read" title="Прочитано">✓✓</span>';
+                } else {
+                    statusHtml = '<span class="msg-status msg-status-sent" title="Доставлено">✓✓</span>';
+                }
+            }
             div.innerHTML =
                 (msg.text ? '<div class="msg-text">' + escapeHtml(msg.text) + '</div>' : '') +
                 fileHtml +
-                '<div class="msg-time">' + escapeHtml(msg.timestamp) + '</div>';
+                '<div class="msg-time">' + escapeHtml(msg.timestamp) + statusHtml + '</div>';
         } else {
             div.className = 'message other' + groupedClass;
             var senderHtml = isGrouped ? '' : '<div class="msg-sender" style="color:' + escapeHtml(msg.sender_avatar_color) + '">' + escapeHtml(msg.sender_nickname) + '</div>';
@@ -508,10 +531,24 @@ var typingDebounce = null;
     }
 
     function onNewMessage(msg) {
+        var chat = chats.find(function (c) { return c.id === msg.chat_id; });
+        var isGroup = chat ? chat.is_group : false;
         if (msg.chat_id === currentChatId) {
-            appendMessage(msg);
+            appendMessage(msg, true, false, isGroup);
+            socket.emit('mark_read', { chat_id: currentChatId });
         }
         loadChats();
+    }
+
+    function onMessageRead(data) {
+        var msgEl = document.querySelector('.message.own[data-msg-id="' + data.message_id + '"]');
+        if (msgEl) {
+            var status = msgEl.querySelector('.msg-status');
+            if (status) {
+                status.className = 'msg-status msg-status-read';
+                status.title = 'Прочитано';
+            }
+        }
     }
 
     function onChatUpdated(chatData) {
@@ -644,6 +681,93 @@ var typingDebounce = null;
         document.getElementById('create-group-btn').addEventListener('click', createGroupChat);
     }
 
+    function showFriendsModal() {
+        var overlay = document.getElementById('modal-overlay');
+        var title = document.getElementById('modal-title');
+        var content = document.getElementById('modal-content');
+
+        title.textContent = 'Друзья';
+        content.innerHTML =
+            '<div class="friends-modal-content">' +
+            '<div class="friends-search"><input type="text" id="friend-search" placeholder="Найти друга..." autocomplete="off"></div>' +
+            '<div class="friends-list" id="friends-list"></div>' +
+            '</div>';
+
+        overlay.classList.remove('hidden');
+
+        loadFriendsList();
+
+        document.getElementById('friend-search').addEventListener('input', function () {
+            loadFriendsList(this.value.trim());
+        });
+    }
+
+    function loadFriendsList(query) {
+        var list = document.getElementById('friends-list');
+        if (!list) return;
+
+        api('GET', '/api/friends').then(function (friends) {
+            if (!list) return;
+
+            if (friends.length === 0) {
+                list.innerHTML = '<div class="chat-list-empty">Нет друзей. Найдите пользователя через + и начните чат</div>';
+                return;
+            }
+
+            var filtered = friends;
+            if (query) {
+                filtered = friends.filter(function (f) {
+                    return f.nickname.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+                });
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="chat-list-empty">Не найдено</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            filtered.forEach(function (f) {
+                var item = document.createElement('div');
+                item.className = 'user-list-item';
+                var avatarHtml;
+                if (f.avatar_photo) {
+                    avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(f.avatar_color) + '"><img src="' + escapeHtml(f.avatar_photo) + '" class="avatar-photo"></div>';
+                } else {
+                    avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(f.avatar_color) + '">' + escapeHtml(f.nickname.charAt(0).toUpperCase()) + '</div>';
+                }
+                item.innerHTML =
+                    avatarHtml +
+                    '<div class="user-item-info">' +
+                    '<div class="user-item-nickname">' + escapeHtml(f.nickname) + (f.is_online ? ' <span class="online-dot"></span>' : '') + '</div>' +
+                    '<div class="user-item-status' + (f.is_online ? ' online' : '') + '">' + (f.is_online ? 'В сети' : 'Не в сети') + '</div>' +
+                    '</div>' +
+                    '<button class="friend-remove-btn" data-friend-id="' + f.id + '" title="Удалить">&times;</button>';
+                item.addEventListener('click', function () {
+                    startPrivateChat(f.id);
+                });
+                item.querySelector('.friend-remove-btn').addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    removeFriend(f.id, f.nickname);
+                });
+                list.appendChild(item);
+            });
+        }).catch(function () {
+            if (list) list.innerHTML = '<div class="chat-list-empty">Ошибка загрузки</div>';
+        });
+    }
+
+    function removeFriend(friendId, nickname) {
+        if (!confirm('Удалить ' + nickname + ' из друзей?')) return;
+        api('DELETE', '/api/friends/' + friendId).then(function (result) {
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            loadFriendsList();
+        });
+    }
+
     function loadUsersForPrivateChat(query) {
         var list = document.getElementById('user-list');
         if (!list) return;
@@ -667,19 +791,44 @@ var typingDebounce = null;
             users.forEach(function (u) {
                 var item = document.createElement('div');
                 item.className = 'user-list-item';
+                var avatarHtml;
+                if (u.avatar_photo) {
+                    avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(u.avatar_color) + '"><img src="' + escapeHtml(u.avatar_photo) + '" class="avatar-photo"></div>';
+                } else {
+                    avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(u.avatar_color) + '">' + escapeHtml(u.nickname.charAt(0).toUpperCase()) + '</div>';
+                }
                 item.innerHTML =
-                    '<div class="chat-avatar small" style="background-color:' + escapeHtml(u.avatar_color) + '">' + escapeHtml(u.nickname.charAt(0).toUpperCase()) + '</div>' +
+                    avatarHtml +
                     '<div class="user-item-info">' +
                     '<div class="user-item-nickname">' + escapeHtml(u.nickname) + (u.is_online ? ' <span class="online-dot"></span>' : '') + '</div>' +
                     '<div class="user-item-status' + (u.is_online ? ' online' : '') + '">' + (u.is_online ? 'В сети' : 'Не в сети') + '</div>' +
-                    '</div>';
+                    '</div>' +
+                    '<button class="friend-add-btn" data-user-id="' + u.id + '" data-user-name="' + escapeHtml(u.nickname) + '" title="Добавить в друзья">+</button>';
                 item.addEventListener('click', function () {
                     startPrivateChat(u.id);
+                });
+                item.querySelector('.friend-add-btn').addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    addFriend(u.id, u.nickname, this);
                 });
                 list.appendChild(item);
             });
         }).catch(function () {
             if (list) list.innerHTML = '<div class="chat-list-empty">Ошибка загрузки</div>';
+        });
+    }
+
+    function addFriend(userId, nickname, btn) {
+        api('POST', '/api/friends/' + userId).then(function (result) {
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            if (btn) {
+                btn.textContent = '✓';
+                btn.classList.add('friend-added');
+                btn.disabled = true;
+            }
         });
     }
 
@@ -1004,8 +1153,27 @@ var typingDebounce = null;
     function openLightbox(url) {
         var lightbox = document.createElement('div');
         lightbox.className = 'image-lightbox';
-        lightbox.innerHTML = '<img src="' + url + '">';
+        lightbox.id = 'lightbox-active';
+        lightbox.innerHTML =
+            '<button class="lightbox-close" id="lightbox-close">&times;</button>' +
+            '<img src="' + url + '">';
         document.body.appendChild(lightbox);
+
+        document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) closeLightbox();
+        });
+        document.addEventListener('keydown', function lightboxEsc(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+                document.removeEventListener('keydown', lightboxEsc);
+            }
+        });
+    }
+
+    function closeLightbox() {
+        var lb = document.getElementById('lightbox-active');
+        if (lb) lb.remove();
     }
 
     // ========== Context Menu ==========
@@ -1053,15 +1221,24 @@ var typingDebounce = null;
         var viewportWidth = window.innerWidth;
         var viewportHeight = window.innerHeight;
 
-        if (x + menuRect.width > viewportWidth) {
-            x = viewportWidth - menuRect.width - 10;
+        var left = x;
+        var top = y;
+
+        if (left + menuRect.width > viewportWidth) {
+            left = viewportWidth - menuRect.width - 10;
         }
-        if (y + menuRect.height > viewportHeight) {
-            y = viewportHeight - menuRect.height - 10;
+        if (left < 10) {
+            left = 10;
+        }
+        if (top + menuRect.height > viewportHeight) {
+            top = viewportHeight - menuRect.height - 10;
+        }
+        if (top < 10) {
+            top = 10;
         }
 
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
 
         menu.querySelectorAll('.context-menu-item').forEach(function (item) {
             item.addEventListener('click', function () {
@@ -1071,9 +1248,7 @@ var typingDebounce = null;
             });
         });
 
-        setTimeout(function () {
-            document.addEventListener('click', hideContextMenu, { once: true });
-        }, 10);
+        document.addEventListener('click', hideContextMenu, { once: true });
     }
 
     function hideContextMenu() {
