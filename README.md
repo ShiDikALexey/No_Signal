@@ -29,7 +29,7 @@
   <img src="https://img.shields.io/badge/Let%27s%20Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white" alt="Let's Encrypt">
 </p>
 
-> **⚠️ Тестовый релиз v0.4.0** — Улучшенная безопасность, производительность и UX.
+> **v0.4.0** — Почтовый клиент, улучшенная безопасность и UX.
 
 ---
 
@@ -204,7 +204,7 @@
 ┌─────────────────────────────────────────────────────────┐
 │              Flask + Flask-SocketIO (Gunicorn)            │
 │                                                          │
-│  app.py · auth.py · chat_routes.py · socket_handlers.py  │
+│  app.py · auth.py · chat_routes.py · socket_handlers.py · mail.py│
 └──────┬──────────────────────────────────────┬───────────┘
        │                                      │
        ▼                                      ▼
@@ -257,7 +257,7 @@ python app.py
 >
 > **Важно**: В production обязательно установите `SECRET_KEY` в `.env` файле!
 
-### Настройка Email (сброс пароля)
+### Настройка Email
 
 No_Signal использует Gmail SMTP для отправки писем. Добавьте в `.env`:
 
@@ -442,7 +442,9 @@ No_Signal следует принципам доступности:
 - ✅ **Accessibility**: ARIA атрибуты для всех интерактивных элементов
 - ✅ **Accessibility**: Keyboard navigation (Enter/Space для кнопок)
 - ✅ **Code quality**: Исправлен deprecated datetime.utcnow() на timezone-aware datetime.now(timezone.utc)
+- ✅ **Code quality**: PostgreSQL — пул соединений (pool_size=5), таймаут SMTP (10с)
 - ✅ **Миграция**: Создан скрипт migrate.py для переноса данных в новую схему
+- ✅ **Email**: HTML-письма с кардиограммой логотипа (PNG), светлая тема
 
 ### v0.3.0
 - ✅ Drag & drop файлов — перетащите файл в окно для отправки
