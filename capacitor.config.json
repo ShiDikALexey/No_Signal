@@ -3,8 +3,8 @@
   "appName": "No_Signal",
   "webDir": "static",
   "server": {
-    "url": "http://CHANGE_ME_SERVER_IP:8080",
-    "cleartext": true,
+    "url": "https://nosignal.su",
+    "cleartext": false,
     "hostname": "nosignal-server"
   },
   "plugins": {
