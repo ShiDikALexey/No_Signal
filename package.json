@@ -1,0 +1,15 @@
+{
+  "name": "nosignal",
+  "version": "1.0.0",
+  "description": "No_Signal encrypted messenger",
+  "private": true,
+  "scripts": {
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.1",
+    "@capacitor/core": "^7.4.1",
+    "@capacitor/cli": "^7.4.1"
+  }
+}

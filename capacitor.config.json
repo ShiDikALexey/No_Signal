@@ -1,0 +1,16 @@
+{
+  "appId": "com.nosignal.app",
+  "appName": "No_Signal",
+  "webDir": "static",
+  "server": {
+    "url": "http://CHANGE_ME_SERVER_IP:8080",
+    "cleartext": true,
+    "hostname": "nosignal-server"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "backgroundColor": "#0d1117"
+    }
+  }
+}

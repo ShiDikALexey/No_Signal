@@ -10,3 +10,10 @@ build/
 dist/
 *.log
 *.spec
+node_modules/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/local.properties
+package-lock.json
