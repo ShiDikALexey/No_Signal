@@ -3,16 +3,20 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import User, AVATAR_COLORS, Chat, Message, SystemAnnouncement
-from extensions import db
+from extensions import db, limiter
 from config import BASE_DIR
+from mail import send_password_reset_email, send_verification_email
 import random
 import os
 import uuid
+import secrets
+from datetime import datetime, timezone, timedelta
 
 auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @auth.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('chat.index'))
@@ -23,9 +27,9 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
-            if email == 'jrfert@gmail.com' and not user.is_admin:
-                user.is_admin = True
-                db.session.commit()
+            if not user.is_verified:
+                flash('Подтвердите ваш email. Проверьте почту.', 'error')
+                return render_template('login.html')
             login_user(user, remember=True)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('chat.index'))
@@ -36,6 +40,7 @@ def login():
 
 
 @auth.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('chat.index'))
@@ -64,30 +69,46 @@ def register():
             for e in errors:
                 flash(e, 'error')
         else:
+            token = secrets.token_urlsafe(32)
             user = User(
                 email=email,
                 nickname=nickname,
                 password_hash=generate_password_hash(password),
-                avatar_color=random.choice(AVATAR_COLORS)
+                avatar_color=random.choice(AVATAR_COLORS),
+                is_verified=False,
+                verify_token=token,
+                verify_token_expires=datetime.now(timezone.utc) + timedelta(hours=24)
             )
             db.session.add(user)
             db.session.commit()
-            login_user(user, remember=True)
-            return redirect(url_for('chat.index'))
+            
+            verify_url = url_for('auth.verify_email', token=token, _external=True)
+            
+            if send_verification_email(email, verify_url, nickname):
+                flash('Письмо с подтверждением отправлено на ваш email', 'success')
+            else:
+                flash('Аккаунт создан, но письмо не удалось отправить. Обратитесь к администратору.', 'error')
+            
+            return redirect(url_for('auth.login'))
 
     return render_template('register.html', email=request.form.get('email', ''), nickname=request.form.get('nickname', ''))
 
 
 @auth.route('/reset-password', methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 def reset_password():
     if current_user.is_authenticated:
         return redirect(url_for('chat.index'))
 
+    token = request.args.get('token', '')
+    email = request.args.get('email', '').strip().lower()
+    
     success = False
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         new_password = request.form.get('new_password', '')
         confirm_password = request.form.get('confirm_password', '')
+        token = request.form.get('token', '')
 
         if not email:
             flash('Введите email', 'error')
@@ -95,17 +116,104 @@ def reset_password():
             flash('Пароль должен быть не менее 6 символов', 'error')
         elif new_password != confirm_password:
             flash('Пароли не совпадают', 'error')
+        elif not token:
+            flash('Требуется подтверждение через email', 'error')
         else:
             user = User.query.filter_by(email=email).first()
-            if user:
-                user.password_hash = generate_password_hash(new_password)
-                db.session.commit()
-                success = True
-                flash('Пароль успешно изменён', 'success')
+            if user and user.reset_token == token:
+                if user.reset_token_expires and user.reset_token_expires.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc):
+                    user.password_hash = generate_password_hash(new_password)
+                    user.reset_token = None
+                    user.reset_token_expires = None
+                    db.session.commit()
+                    success = True
+                    flash('Пароль успешно изменён', 'success')
+                else:
+                    flash('Ссылка для сброса пароля истекла', 'error')
             else:
-                flash('Пользователь с таким email не найден', 'error')
+                flash('Неверный или отсутствующий токен', 'error')
 
-    return render_template('reset_password.html', success=success)
+    return render_template('reset_password.html', success=success, token=token, email=email)
+
+
+@auth.route('/verify/<token>')
+def verify_email(token):
+    user = User.query.filter_by(verify_token=token).first()
+    
+    if not user:
+        flash('Неверная или истёкшая ссылка подтверждения', 'error')
+        return redirect(url_for('auth.login'))
+    
+    if user.verify_token_expires and user.verify_token_expires.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        flash('Ссылка подтверждения истекла. Зарегистрируйтесь заново.', 'error')
+        db.session.delete(user)
+        db.session.commit()
+        return redirect(url_for('auth.register'))
+    
+    user.is_verified = True
+    user.verify_token = None
+    user.verify_token_expires = None
+    db.session.commit()
+    
+    flash('Email подтверждён! Теперь вы можете войти.', 'success')
+    return redirect(url_for('auth.login'))
+
+
+@auth.route('/resend-verification', methods=['POST'])
+@limiter.limit("3 per hour")
+def resend_verification():
+    email = request.form.get('email', '').strip().lower()
+    
+    if not email:
+        flash('Введите email', 'error')
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.filter_by(email=email, is_verified=False).first()
+    
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.verify_token = token
+        user.verify_token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+        db.session.commit()
+        
+        verify_url = url_for('auth.verify_email', token=token, _external=True)
+        
+        if send_verification_email(email, verify_url, user.nickname):
+            flash('Письмо с подтверждением отправлено повторно', 'success')
+        else:
+            flash('Ошибка отправки. Попробуйте позже.', 'error')
+    else:
+        flash('Если аккаунт существует и не подтверждён, письмо будет отправлено', 'info')
+    
+    return redirect(url_for('auth.login'))
+
+
+@auth.route('/request-reset', methods=['POST'])
+@limiter.limit("3 per hour")
+def request_password_reset():
+    email = request.form.get('email', '').strip().lower()
+    
+    if not email:
+        flash('Введите email', 'error')
+        return redirect(url_for('auth.reset_password'))
+    
+    user = User.query.filter_by(email=email).first()
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        db.session.commit()
+        
+        reset_url = url_for('auth.reset_password', token=token, email=email, _external=True)
+        
+        if send_password_reset_email(email, reset_url):
+            flash('Ссылка для сброса пароля отправлена на ваш email', 'success')
+        else:
+            flash('Ошибка отправки письма. Попробуйте позже или обратитесь к администратору.', 'error')
+    else:
+        flash('Если пользователь с таким email существует, ссылка для сброса отправлена', 'info')
+    
+    return redirect(url_for('auth.reset_password'))
 
 
 @auth.route('/logout')

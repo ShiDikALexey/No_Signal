@@ -12,7 +12,12 @@ BASE_DIR = get_base_dir()
 
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'no-signal-dev-key-2024')
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        import secrets
+        SECRET_KEY = secrets.token_hex(32)
+        print('WARNING: SECRET_KEY not set in environment. Generated temporary key.')
+        print('Set SECRET_KEY in .env file for production use!')
 
     DATABASE_URL = os.environ.get('DATABASE_URL', '')
     if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):

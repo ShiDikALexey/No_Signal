@@ -1059,6 +1059,49 @@ a:hover {
     font-size: 0.93em;
 }
 
+.msg-text code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.msg-text pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.msg-text pre code {
+    background: none;
+    padding: 0;
+}
+
+.msg-text a {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.msg-text a:hover {
+    color: var(--accent-hover);
+}
+
+.msg-text strong {
+    font-weight: 700;
+}
+
+.msg-text em {
+    font-style: italic;
+}
+
+.msg-text del {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
 .msg-time {
     font-size: 0.72em;
     color: rgba(255, 255, 255, 0.55);
@@ -2381,4 +2424,244 @@ a:hover {
 .btn-save {
     background: var(--accent);
     color: #fff;
+}
+
+/* ========== Toast Notifications ========== */
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: toastSlideIn 0.3s ease;
+    min-width: 280px;
+}
+
+.toast-hiding {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 0.9em;
+    color: var(--text-primary);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.3em;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.toast-close:hover {
+    color: var(--text-primary);
+}
+
+.toast-success {
+    border-left: 4px solid var(--success);
+}
+
+.toast-error {
+    border-left: 4px solid var(--danger);
+}
+
+.toast-info {
+    border-left: 4px solid var(--accent);
+}
+
+.toast-warning {
+    border-left: 4px solid #e67e22;
+}
+
+/* ========== Confirm Dialog ========== */
+
+.confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.2s ease;
+}
+
+.confirm-message {
+    font-size: 0.95em;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.confirm-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.confirm-btn-cancel {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.confirm-btn-cancel:hover {
+    background: var(--bg-hover);
+}
+
+.confirm-btn-ok {
+    background: var(--danger);
+    color: #fff;
+}
+
+.confirm-btn-ok:hover {
+    background: #c73852;
+}
+
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .toast {
+        min-width: auto;
+    }
+}
+
+/* ========== Skeleton Loaders ========== */
+
+.skeleton-chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.skeleton-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s infinite;
+    flex-shrink: 0;
+}
+
+.skeleton-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s infinite;
+}
+
+.skeleton-line-short {
+    width: 40%;
+}
+
+.skeleton-line-long {
+    width: 80%;
+}
+
+.skeleton-line-message {
+    width: 70%;
+    height: 14px;
+}
+
+.skeleton-message {
+    padding: 10px 14px;
+    border-radius: 16px;
+    max-width: 70%;
+}
+
+.skeleton-message.own {
+    align-self: flex-end;
+}
+
+.skeleton-message.other {
+    align-self: flex-start;
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
 }

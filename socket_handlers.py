@@ -2,7 +2,7 @@ from flask_socketio import emit, join_room, leave_room
 from flask_login import current_user
 from models import User, Chat, Message
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 from crypto import encrypt, decrypt
 
 
@@ -15,7 +15,7 @@ def register_socket_handlers(socketio):
 
         user = User.query.get(current_user.id)
         if user:
-            user.last_seen = datetime.utcnow()
+            user.last_seen = datetime.now(timezone.utc)
             db.session.commit()
 
         join_room(f'user_{current_user.id}')
@@ -34,7 +34,7 @@ def register_socket_handlers(socketio):
         if current_user.is_authenticated:
             user = User.query.get(current_user.id)
             if user:
-                user.last_seen = datetime.utcnow()
+                user.last_seen = datetime.now(timezone.utc)
                 db.session.commit()
             emit('user_offline', {
                 'user_id': current_user.id,
@@ -76,7 +76,7 @@ def register_socket_handlers(socketio):
             chat_id=chat_id,
             sender_id=current_user.id,
             text=encrypt(text),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             file_url=file_url,
             file_name=file_name,
             file_type=file_type,

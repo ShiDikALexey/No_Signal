@@ -3,8 +3,12 @@ import sys
 import socket
 
 from flask import Flask
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from config import Config, BASE_DIR
-from extensions import db, socketio, login_manager
+from extensions import db, socketio, login_manager, limiter
 from models import User
 
 
@@ -37,6 +41,7 @@ def create_app():
     db.init_app(app)
     socketio.init_app(app, async_mode='threading', cors_allowed_origins='*', logger=False, engineio_logger=False)
     login_manager.init_app(app)
+    limiter.init_app(app)
 
     from auth import auth
     from chat_routes import chat

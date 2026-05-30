@@ -31,7 +31,8 @@ def test_user(app):
             email='test@example.com',
             nickname='TestUser',
             password_hash=generate_password_hash('password123'),
-            avatar_color='#ff0000'
+            avatar_color='#ff0000',
+            is_verified=True
         )
         db.session.add(user)
         db.session.commit()
