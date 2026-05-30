@@ -1,6 +1,6 @@
 from extensions import db
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 import random
 
 AVATAR_COLORS = [
@@ -33,10 +33,13 @@ class User(UserMixin, db.Model):
     avatar_photo = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(100), nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
-        is_online = (datetime.utcnow() - self.last_seen).total_seconds() < 180
+        last_seen = self.last_seen
+        if last_seen and last_seen.tzinfo is None:
+            last_seen = last_seen.replace(tzinfo=timezone.utc)
+        is_online = last_seen and (datetime.now(timezone.utc) - last_seen).total_seconds() < 180
         return {
             'id': self.id,
             'nickname': self.nickname,
@@ -55,7 +58,7 @@ class Chat(db.Model):
     is_pinned = db.Column(db.Boolean, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     is_muted = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     members = db.relationship('User', secondary=chat_members, backref='chats')
     messages = db.relationship('Message', backref='chat_msg', order_by='Message.timestamp')
@@ -106,7 +109,7 @@ class Message(db.Model):
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     text = db.Column(db.Text, nullable=False, default='')
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     file_type = db.Column(db.String(20), nullable=True)
     file_url = db.Column(db.String(500), nullable=True)
     file_name = db.Column(db.String(255), nullable=True)
@@ -137,7 +140,7 @@ class SystemAnnouncement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {

@@ -120,14 +120,14 @@
 {% block scripts %}
 <script src="/static/socket.io.min.js"></script>
 <script>
-window.CURRENT_USER = {
-    id: {{ current_user.id }},
-    nickname: "{{ current_user.nickname }}",
-    avatarColor: "{{ current_user.avatar_color }}",
-    avatarPhoto: "{{ current_user.avatar_photo or '' }}",
-    status: "{{ current_user.status or '' }}",
-    isAdmin: {{ 'true' if current_user.is_admin else 'false' }}
-};
+window.CURRENT_USER = {{ {
+    'id': current_user.id,
+    'nickname': current_user.nickname,
+    'avatarColor': current_user.avatar_color,
+    'avatarPhoto': current_user.avatar_photo or '',
+    'status': current_user.status or '',
+    'isAdmin': current_user.is_admin
+} | tojson | safe }};
 </script>
-<script src="/static/main.js"></script>
+<script src="/static/main.js?v=5"></script>
 {% endblock %}

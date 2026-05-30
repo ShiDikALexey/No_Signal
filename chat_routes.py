@@ -2,15 +2,16 @@ from flask import Blueprint, render_template, jsonify, request, send_from_direct
 from flask_login import login_required, current_user
 from models import User, Chat, Message, chat_members
 from extensions import db, socketio
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.utils import secure_filename
 from crypto import decrypt
+from sqlalchemy import func
 import os
 import uuid
 
 chat = Blueprint('chat', __name__)
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'zip', 'rar', '7z', 'tar', 'gz', 'exe', 'apk', 'dmg', 'iso', 'json', 'xml', 'csv', 'py', 'js', 'html', 'css', 'sql', 'sh', 'bat'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'zip', 'rar', '7z', 'tar', 'gz', 'json', 'xml', 'csv', 'py', 'js', 'html', 'css', 'sql'}
 
 
 def allowed_file(filename):
@@ -61,13 +62,23 @@ def search_users():
 def get_chats():
     user_chats = Chat.query.filter(
         Chat.members.any(User.id == current_user.id)
-    ).order_by(Chat.id.desc()).all()
+    ).all()
+
+    chat_ids = [c.id for c in user_chats]
+
+    last_msg_query = db.session.query(
+        Message.chat_id,
+        func.max(Message.timestamp).label('max_ts')
+    ).filter(
+        Message.chat_id.in_(chat_ids)
+    ).group_by(Message.chat_id).all()
+    last_msg_map = {row.chat_id: row.max_ts for row in last_msg_query}
 
     chats_with_messages = []
     for c in user_chats:
-        msgs = Message.query.filter_by(chat_id=c.id).order_by(Message.timestamp.desc()).first()
-        if msgs:
-            chats_with_messages.append((c, msgs.timestamp))
+        latest_ts = last_msg_map.get(c.id)
+        if latest_ts:
+            chats_with_messages.append((c, latest_ts))
         else:
             chats_with_messages.append((c, c.created_at))
 
