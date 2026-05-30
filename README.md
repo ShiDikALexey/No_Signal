@@ -215,7 +215,7 @@ sudo systemctl enable --now nosignal
 ```nginx
 server {
     listen 80;
-    server_name nosignal.ru;
+    server_name nosignal.su;
     client_max_body_size 25M;
 
     location / {
@@ -240,7 +240,7 @@ server {
 ```
 
 ```bash
-sudo certbot --nginx -d nosignal.ru
+sudo certbot --nginx -d nosignal.su
 ```
 
 ---
