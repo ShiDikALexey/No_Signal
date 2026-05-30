@@ -5,6 +5,10 @@ KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.encryption
 
 
 def get_or_create_key():
+    env_key = os.environ.get('ENCRYPTION_KEY', '')
+    if env_key:
+        return env_key.encode('utf-8')
+
     if os.path.exists(KEY_FILE):
         with open(KEY_FILE, 'rb') as f:
             return f.read()

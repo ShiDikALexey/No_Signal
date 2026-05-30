@@ -1,34 +1,12 @@
-# Secrets
-.encryption_key
 .env
-
-# Python
+.encryption_key
+*.db
+certs/
+uploads/
 __pycache__/
 *.pyc
 .venv/
-venv/
-
-# Build
 build/
 dist/
-*.spec
-
-# Database
-no_signal.db
-
-# Logs
 *.log
-
-# Cookies
-cookies*.txt
-
-# User uploads
-uploads/
-!static/uploads/
-
-# Generated certificates
-certs/
-
-# IDE
-.vscode/
-.idea/
+*.spec
