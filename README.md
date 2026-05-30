@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="static/favicon.svg">
-    <img src="static/favicon.svg" width="96" alt="No_Signal">
+    <source media="(prefers-color-scheme: dark)" srcset="static/favicon.svg?v=3">
+    <img src="static/favicon.svg?v=3" width="96" alt="No_Signal">
   </picture>
 </p>
 

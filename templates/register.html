@@ -4,20 +4,31 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-logo">
-            <svg class="auth-logo-icon" viewBox="0 0 64 64" width="64" height="64">
+            <svg class="auth-logo-icon" viewBox="0 0 64 64" width="96" height="96">
                 <defs>
                     <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#58a6ff"/>
                         <stop offset="100%" stop-color="#1f6feb"/>
                     </linearGradient>
+                    <style>
+                        .ecg{stroke-dasharray:60;stroke-dashoffset:60;animation:drawECG 4s ease-in-out infinite}
+                        .flatline{stroke-dasharray:20;stroke-dashoffset:20;animation:drawFlat 4s ease-in-out infinite}
+                        .dot{opacity:0;animation:showDot 4s ease-in-out infinite}
+                        .cross{opacity:0;transform-origin:17px 12px;animation:showCross 4s ease-in-out infinite}
+                        @keyframes drawECG{0%,10%{stroke-dashoffset:60}30%,70%{stroke-dashoffset:0}90%,100%{stroke-dashoffset:60}}
+                        @keyframes drawFlat{0%,35%{stroke-dashoffset:20}55%,70%{stroke-dashoffset:0}90%,100%{stroke-dashoffset:20}}
+                        @keyframes showDot{0%,55%{opacity:0}60%,70%{opacity:1}80%,100%{opacity:0}}
+                        @keyframes showCross{0%,70%{opacity:0;transform:scale(0) rotate(0deg)}75%,85%{opacity:1;transform:scale(1) rotate(45deg)}95%,100%{opacity:0;transform:scale(0) rotate(45deg)}}
+                    </style>
                 </defs>
-                <rect width="64" height="64" rx="14" fill="#0d1117"/>
-                <g transform="translate(4, 20) scale(2.5)">
-                    <path d="M2 12h5l2-4 2 8 2-6 1 3h8" fill="none" stroke="url(#lg)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <line x1="13" y1="12" x2="22" y2="12" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="17" cy="12" r="1.5" fill="#e94560"/>
-                    <line x1="15" y1="10" x2="19" y2="14" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
-                    <line x1="19" y1="10" x2="15" y2="14" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
+                <g transform="translate(4,20) scale(2.5)">
+                    <path class="ecg" d="M2 12h5l2-4 2 8 2-6 1 3h8" fill="none" stroke="url(#lg)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line class="flatline" x1="13" y1="12" x2="22" y2="12" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle class="dot" cx="17" cy="12" r="1.5" fill="#e94560"/>
+                    <g class="cross" stroke="#e94560" stroke-width="1.5" stroke-linecap="round">
+                        <line x1="15" y1="10" x2="19" y2="14"/>
+                        <line x1="19" y1="10" x2="15" y2="14"/>
+                    </g>
                 </g>
             </svg>
             <span>No_Signal</span>
