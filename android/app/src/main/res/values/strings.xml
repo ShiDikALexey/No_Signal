@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">No_Signal</string>
-    <string name="title_activity_main">No_Signal</string>
+    <string name="app_name">NoSignal</string>
+    <string name="title_activity_main">NoSignal</string>
     <string name="package_name">com.nosignal.app</string>
     <string name="custom_url_scheme">com.nosignal.app</string>
 </resources>

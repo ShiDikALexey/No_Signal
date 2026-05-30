@@ -1,6 +1,6 @@
 {
   "appId": "com.nosignal.app",
-  "appName": "No_Signal",
+  "appName": "NoSignal",
   "webDir": "static",
   "server": {
     "url": "https://nosignal.su",

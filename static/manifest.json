@@ -1,6 +1,6 @@
 {
-  "name": "No_Signal",
-  "short_name": "No_Signal",
+  "name": "NoSignal",
+  "short_name": "NoSignal",
   "description": "Шифрованный мессенджер",
   "start_url": "/",
   "display": "standalone",
