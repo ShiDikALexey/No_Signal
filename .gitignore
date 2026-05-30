@@ -16,4 +16,5 @@ android/build/
 android/app/build/
 android/capacitor-cordova-android-plugins/
 android/local.properties
+!android/gradle/wrapper/gradle-wrapper.jar
 package-lock.json
