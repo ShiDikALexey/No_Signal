@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 from models import User, AVATAR_COLORS, Chat, Message, SystemAnnouncement
 from extensions import db, limiter
 from config import BASE_DIR
+from mail import send_password_reset_email
 import random
 import os
 import uuid
@@ -138,9 +139,13 @@ def request_password_reset():
         db.session.commit()
         
         reset_url = url_for('auth.reset_password', token=token, email=email, _external=True)
-        flash(f'Для сброса пароля перейдите по ссылке: {reset_url}', 'info')
+        
+        if send_password_reset_email(email, reset_url):
+            flash('Ссылка для сброса пароля отправлена на ваш email', 'success')
+        else:
+            flash('Ошибка отправки письма. Попробуйте позже или обратитесь к администратору.', 'error')
     else:
-        flash('Если пользователь существует, ссылка для сброса отправлена', 'info')
+        flash('Если пользователь с таким email существует, ссылка для сброса отправлена', 'info')
     
     return redirect(url_for('auth.reset_password'))
 

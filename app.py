@@ -3,6 +3,10 @@ import sys
 import socket
 
 from flask import Flask
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from config import Config, BASE_DIR
 from extensions import db, socketio, login_manager, limiter
 from models import User
