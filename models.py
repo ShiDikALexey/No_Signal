@@ -58,9 +58,12 @@ class User(UserMixin, db.Model):
     avatar_photo = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(100), nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
     last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expires = db.Column(db.DateTime, nullable=True)
+    verify_token = db.Column(db.String(100), nullable=True)
+    verify_token_expires = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         is_online = (datetime.now(timezone.utc) - self.last_seen.replace(tzinfo=timezone.utc)).total_seconds() < 180

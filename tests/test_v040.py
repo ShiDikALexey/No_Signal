@@ -30,7 +30,8 @@ def auth_client(app, client):
             email='test@example.com',
             nickname='testuser',
             password_hash=generate_password_hash('password123'),
-            avatar_color='#e94560'
+            avatar_color='#e94560',
+            is_verified=True
         )
         db.session.add(user)
         db.session.commit()
@@ -153,6 +154,93 @@ class TestPasswordReset:
             user = User.query.filter_by(email='test@example.com').first()
             assert user.reset_token is not None
             assert user.reset_token_expires is not None
+
+
+class TestEmailVerification:
+    def test_register_creates_unverified_user(self, app, client):
+        with app.app_context():
+            response = client.post('/auth/register', data={
+                'email': 'new@example.com',
+                'nickname': 'NewUser',
+                'password': 'password123',
+                'confirm_password': 'password123'
+            }, follow_redirects=True)
+            assert response.status_code == 200
+            
+            user = User.query.filter_by(email='new@example.com').first()
+            assert user is not None
+            assert user.is_verified == False
+            assert user.verify_token is not None
+    
+    def test_unverified_user_cannot_login(self, app, client):
+        with app.app_context():
+            user = User(
+                email='unverified@example.com',
+                nickname='Unverified',
+                password_hash=generate_password_hash('password123'),
+                avatar_color='#e94560',
+                is_verified=False
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            response = client.post('/auth/login', data={
+                'email': 'unverified@example.com',
+                'password': 'password123'
+            }, follow_redirects=True)
+            
+            assert b'login' in response.data.lower() or b'auth' in response.data.lower()
+    
+    def test_verify_email_success(self, app, client):
+        with app.app_context():
+            import secrets
+            from datetime import datetime, timezone, timedelta
+            token = secrets.token_urlsafe(32)
+            user = User(
+                email='verify@example.com',
+                nickname='VerifyUser',
+                password_hash=generate_password_hash('password123'),
+                avatar_color='#e94560',
+                is_verified=False,
+                verify_token=token,
+                verify_token_expires=datetime.now(timezone.utc) + timedelta(hours=24)
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            response = client.get(f'/auth/verify/{token}', follow_redirects=True)
+            assert response.status_code == 200
+            
+            user = User.query.filter_by(email='verify@example.com').first()
+            assert user.is_verified == True
+            assert user.verify_token is None
+    
+    def test_verify_email_expired_token(self, app, client):
+        with app.app_context():
+            import secrets
+            from datetime import datetime, timezone, timedelta
+            token = secrets.token_urlsafe(32)
+            user = User(
+                email='expired@example.com',
+                nickname='ExpiredUser',
+                password_hash=generate_password_hash('password123'),
+                avatar_color='#e94560',
+                is_verified=False,
+                verify_token=token,
+                verify_token_expires=datetime.now(timezone.utc) - timedelta(hours=1)
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            response = client.get(f'/auth/verify/{token}', follow_redirects=True)
+            assert response.status_code == 200
+            
+            user = User.query.filter_by(email='expired@example.com').first()
+            assert user is None
+    
+    def test_verify_email_invalid_token(self, app, client):
+        response = client.get('/auth/verify/invalid-token', follow_redirects=True)
+        assert response.status_code == 200
 
 
 class TestRateLimiting:

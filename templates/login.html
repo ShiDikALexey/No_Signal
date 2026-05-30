@@ -43,6 +43,18 @@
         </form>
         <p class="auth-link">Ещё нет аккаунта? <a href="/auth/register">Зарегистрироваться</a></p>
         <p class="auth-link"><a href="/auth/reset-password">Забыли пароль?</a></p>
+        <p class="auth-link"><a href="#" id="resend-verification-link">Не получили письмо подтверждения?</a></p>
+        <form method="POST" action="/auth/resend-verification" id="resend-form" style="display:none; margin-top:10px;">
+            <input type="email" name="email" placeholder="Ваш email" required style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-primary);color:var(--text-primary);font-size:0.95em;outline:none;margin-bottom:8px;">
+            <button type="submit" class="btn-primary" style="padding:10px;font-size:0.9em;">Отправить повторно</button>
+        </form>
+        <script>
+        document.getElementById('resend-verification-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('resend-form').style.display = 'block';
+            this.style.display = 'none';
+        });
+        </script>
     </div>
 </div>
 {% endblock %}

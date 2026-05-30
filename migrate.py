@@ -23,6 +23,15 @@ with app.app_context():
         print('reset_token:', str(e))
     
     try:
+        db.session.execute(db.text('ALTER TABLE user ADD COLUMN is_verified BOOLEAN DEFAULT TRUE'))
+        db.session.execute(db.text('ALTER TABLE user ADD COLUMN verify_token VARCHAR(100)'))
+        db.session.execute(db.text('ALTER TABLE user ADD COLUMN verify_token_expires DATETIME'))
+        db.session.commit()
+        print('Added email verification columns')
+    except Exception as e:
+        print('verify columns:', str(e))
+    
+    try:
         chats = Chat.query.all()
         for chat in chats:
             for member in chat.members:
