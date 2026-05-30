@@ -8,7 +8,7 @@
 <h1 align="center">No_Signal</h1>
 
 <p align="center">
-  <strong>Приватный мессенджер с end-to-end шифрованием и real-time синхронизацией</strong>
+  <strong>Приватный мессенджер с шифрованием на стороне сервера и real-time синхронизацией</strong>
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@
 | | |
 |---|---|
 | **Real-time WebSocket** | Мгновенная доставка через Flask-SocketIO |
-| **AES-128 CBC шифрование** | Все сообщения шифруются перед сохранением в БД |
+| **Encryption-at-rest (AES-128 CBC)** | Сообщения шифруются перед записью в БД, сервер расшифровывает при отправке клиенту |
 | **Read receipts (✓✓)** | Серые — доставлено, синие — прочитано, авто-обновление |
 | **Typing indicators** | Анимированные точки, debounce 2с, отключается при отправке |
 | **Date separators** | "Сегодня", "Вчера", полная дата для старых сообщений |
@@ -119,7 +119,7 @@
 | | |
 |---|---|
 | **AES-128 CBC (Fernet)** | Сообщения шифруются перед сохранением в БД |
-| **Ключ шифрования** | Хранится в файле `.encryption_key` или `ENCRYPTION_KEY` env |
+| **Ключ шифрования** | Серверный статический ключ в `.encryption_key` или `ENCRYPTION_KEY` env (не E2EE) |
 | **CSRF защита** | `credentials: 'same-origin'` на всех API-запросах |
 | **Flask-Login** | Сессии с remember-me |
 | **UUID filenames** | Предотвращение path traversal и перезаписи |
