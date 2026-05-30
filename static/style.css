@@ -65,11 +65,23 @@ a:hover {
 }
 
 .auth-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.auth-logo-icon {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+.auth-logo span {
     font-size: 1.8em;
     font-weight: 800;
     color: var(--accent);
-    text-align: center;
-    margin-bottom: 8px;
     letter-spacing: -1px;
 }
 
