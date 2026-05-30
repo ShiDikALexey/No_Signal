@@ -82,6 +82,27 @@
             document.getElementById('file-input').click();
         });
         document.getElementById('file-input').addEventListener('change', handleFileSelect);
+        document.getElementById('new-chat-btn').addEventListener('click', showNewChatModal);
+        document.getElementById('modal-close').addEventListener('click', closeModal);
+        document.getElementById('modal-overlay').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+        document.getElementById('user-info-trigger').addEventListener('click', toggleProfileDropdown);
+        document.getElementById('btn-change-nickname').addEventListener('click', showChangeNickname);
+        document.getElementById('btn-account-settings').addEventListener('click', showAccountSettings);
+        document.getElementById('search-input').addEventListener('input', function () {
+            renderChatList(this.value.trim().toLowerCase());
+        });
+        document.getElementById('archive-btn').addEventListener('click', function () {
+            showingArchive = true;
+            renderChatList();
+        });
+        document.getElementById('back-btn').addEventListener('click', function () {
+            document.getElementById('chat-area').classList.remove('active');
+            document.getElementById('chat-area').classList.remove('mobile-show');
+            document.getElementById('sidebar').classList.remove('mobile-hidden');
+            document.getElementById('no-chat-selected').classList.remove('hidden');
+        });
         document.getElementById('message-input').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
