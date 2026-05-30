@@ -158,7 +158,7 @@ def send_email(to_email, subject, html_content):
     msg.attach(html_part)
 
     try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
             server.starttls()
             server.login(username, password)
             server.send_message(msg)
