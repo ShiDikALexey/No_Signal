@@ -12,14 +12,14 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        <form method="POST" class="auth-form">
+        <form method="POST" class="auth-form" id="register-form">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="your@email.com" required autofocus>
+                <input type="email" id="email" name="email" placeholder="your@email.com" value="{{ email }}" required autofocus>
             </div>
             <div class="form-group">
                 <label for="nickname">Никнейм</label>
-                <input type="text" id="nickname" name="nickname" placeholder="Ваш никнейм" maxlength="24" required>
+                <input type="text" id="nickname" name="nickname" placeholder="Ваш никнейм" maxlength="24" value="{{ nickname }}" required>
             </div>
             <div class="form-group">
                 <label for="password">Пароль</label>
@@ -28,10 +28,29 @@
             <div class="form-group">
                 <label for="confirm_password">Подтвердите пароль</label>
                 <input type="password" id="confirm_password" name="confirm_password" placeholder="Повторите пароль" required>
+                <div id="password-mismatch" class="form-hint form-hint-error" style="display:none;">Пароли не совпадают</div>
             </div>
             <button type="submit" class="btn-primary">Зарегистрироваться</button>
         </form>
         <p class="auth-link">Уже есть аккаунт? <a href="/auth/login">Войти</a></p>
     </div>
 </div>
+<script>
+(function() {
+    var pw = document.getElementById('password');
+    var cpw = document.getElementById('confirm_password');
+    var hint = document.getElementById('password-mismatch');
+    function check() {
+        if (cpw.value.length > 0 && pw.value !== cpw.value) {
+            hint.style.display = 'block';
+            cpw.style.borderColor = '#e74c3c';
+        } else {
+            hint.style.display = 'none';
+            cpw.style.borderColor = '';
+        }
+    }
+    pw.addEventListener('input', check);
+    cpw.addEventListener('input', check);
+})();
+</script>
 {% endblock %}

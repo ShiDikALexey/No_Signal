@@ -75,7 +75,37 @@ def register():
             login_user(user, remember=True)
             return redirect(url_for('chat.index'))
 
-    return render_template('register.html')
+    return render_template('register.html', email=request.form.get('email', ''), nickname=request.form.get('nickname', ''))
+
+
+@auth.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('chat.index'))
+
+    success = False
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not email:
+            flash('Введите email', 'error')
+        elif len(new_password) < 6:
+            flash('Пароль должен быть не менее 6 символов', 'error')
+        elif new_password != confirm_password:
+            flash('Пароли не совпадают', 'error')
+        else:
+            user = User.query.filter_by(email=email).first()
+            if user:
+                user.password_hash = generate_password_hash(new_password)
+                db.session.commit()
+                success = True
+                flash('Пароль успешно изменён', 'success')
+            else:
+                flash('Пользователь с таким email не найден', 'error')
+
+    return render_template('reset_password.html', success=success)
 
 
 @auth.route('/logout')

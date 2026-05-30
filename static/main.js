@@ -89,7 +89,7 @@
             }
         });
 
-        var typingDebounce = null;
+var typingDebounce = null;
         document.getElementById('message-input').addEventListener('input', function () {
             if (!currentChatId) return;
             if (typingDebounce) clearTimeout(typingDebounce);
@@ -98,82 +98,6 @@
                 socket.emit('stop_typing', { chat_id: currentChatId });
             }, 2000);
         });
-
-        document.getElementById('new-chat-btn').addEventListener('click', function () {
-            showNewChatModal();
-        });
-
-        document.getElementById('modal-close').addEventListener('click', closeModal);
-        document.getElementById('modal-overlay').addEventListener('click', function (e) {
-            if (e.target === this) closeModal();
-        });
-
-        document.getElementById('back-btn').addEventListener('click', function () {
-            document.getElementById('sidebar').classList.remove('mobile-hidden');
-            document.getElementById('chat-area').classList.remove('mobile-show');
-        });
-
-        document.getElementById('archive-btn').addEventListener('click', function () {
-            showingArchive = true;
-            renderChatList();
-        });
-
-        var searchInput = document.getElementById('search-input');
-        searchInput.addEventListener('input', function () {
-            renderChatList(searchInput.value.trim().toLowerCase());
-        });
-
-        document.addEventListener('click', function (e) {
-            var picker = document.getElementById('emoji-picker');
-            var btn = document.getElementById('emoji-btn');
-            if (picker && !picker.classList.contains('hidden') && !picker.contains(e.target) && e.target !== btn) {
-                picker.classList.add('hidden');
-            }
-        });
-
-        var chatArea = document.getElementById('chat-area');
-        chatArea.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            showDragOverlay();
-        });
-        chatArea.addEventListener('dragleave', function (e) {
-            if (!chatArea.contains(e.relatedTarget)) {
-                hideDragOverlay();
-            }
-        });
-        chatArea.addEventListener('drop', function (e) {
-            e.preventDefault();
-            hideDragOverlay();
-            if (e.dataTransfer.files.length > 0) {
-                pendingFile = e.dataTransfer.files[0];
-                showFilePreview(pendingFile);
-            }
-        });
-
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('image-lightbox')) {
-                e.target.remove();
-            }
-        });
-
-        document.getElementById('user-info-trigger').addEventListener('click', function (e) {
-            e.stopPropagation();
-            toggleProfileDropdown();
-        });
-
-        document.addEventListener('click', function (e) {
-            var dropdown = document.getElementById('profile-dropdown');
-            var trigger = document.getElementById('user-info-trigger');
-            if (dropdown && !dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !trigger.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('btn-change-nickname').addEventListener('click', showChangeNickname);
-        document.getElementById('btn-account-settings').addEventListener('click', showAccountSettings);
-
-        var messageInput = document.getElementById('message-input');
-        messageInput.addEventListener('input', toggleVoiceSendButtons);
 
         var voiceBtn = document.getElementById('voice-btn');
         voiceBtn.addEventListener('mousedown', startVoiceRecording);
@@ -196,8 +120,6 @@
         });
 
         document.getElementById('voice-recording-cancel').addEventListener('click', cancelVoiceRecording);
-
-        toggleVoiceSendButtons();
     }
 
     function loadChats() {
@@ -1380,20 +1302,6 @@
                 });
             });
         });
-    }
-
-    function toggleVoiceSendButtons() {
-        var input = document.getElementById('message-input');
-        var sendBtn = document.getElementById('send-btn');
-        var voiceBtn = document.getElementById('voice-btn');
-
-        if (input.value.trim().length > 0) {
-            sendBtn.classList.remove('hidden');
-            voiceBtn.classList.add('hidden');
-        } else {
-            sendBtn.classList.add('hidden');
-            voiceBtn.classList.remove('hidden');
-        }
     }
 
     function startVoiceRecording() {

@@ -108,6 +108,15 @@ a:hover {
     border-color: var(--accent);
 }
 
+.form-hint {
+    font-size: 0.8em;
+    margin-top: 4px;
+}
+
+.form-hint-error {
+    color: var(--danger);
+}
+
 .btn-primary {
     width: 100%;
     padding: 12px;
