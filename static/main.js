@@ -46,7 +46,9 @@
     }
 
     function initSocket() {
-        socket = io();
+        socket = io({
+            transports: ['websocket']
+        });
         socket.on('connect', function () {
             console.log('Socket connected');
         });
@@ -653,6 +655,8 @@ var typingDebounce = null;
                 });
                 list.appendChild(item);
             });
+        }).catch(function () {
+            if (list) list.innerHTML = '<div class="chat-list-empty">Ошибка загрузки</div>';
         });
     }
 
@@ -693,6 +697,8 @@ var typingDebounce = null;
                 });
                 list.appendChild(item);
             });
+        }).catch(function () {
+            if (list) list.innerHTML = '<div class="chat-list-empty">Ошибка загрузки</div>';
         });
     }
 

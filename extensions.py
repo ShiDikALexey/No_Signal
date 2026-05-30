@@ -3,6 +3,6 @@ from flask_socketio import SocketIO
 from flask_login import LoginManager
 
 db = SQLAlchemy()
-socketio = SocketIO(async_mode='threading', async_handlers=True)
+socketio = SocketIO(async_mode='threading')
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
