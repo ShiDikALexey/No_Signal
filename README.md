@@ -110,6 +110,20 @@ pytest tests/ -v
 
 ---
 
+## Changelog
+
+### v0.1.0-test (текущий)
+- ✅ WebSocket real-time — сообщения без задержек
+- ✅ Фикс двойной инициализации Socket.IO (главная причина зависаний)
+- ✅ Голосовые сообщения — фикс touch-событий на мобильных
+- ✅ Десктоп layout — max-width 1200px, центрирование как в VK/Telegram
+- ✅ Автопереподключение WebSocket при обрыве (50 попыток)
+- ✅ Смена никнейма — красивое модальное окно вместо prompt()
+- ✅ Поиск пользователей — добавлена обработка ошибок
+- ✅ 19 автотестов (19 passed)
+
+---
+
 <p align="center">
   <a href="https://nosignal.su">nosignal.su</a> ·
   <a href="https://github.com/ShiDikALexey/No_Signal/issues">Сообщить о баге</a>
