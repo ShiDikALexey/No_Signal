@@ -22,6 +22,17 @@
 
 ---
 
+## 📸 Скриншоты
+
+<p align="center">
+  <img src="screenshots/login.png" width="45%" alt="Login page">
+  <img src="screenshots/chat-mobile.png" width="22%" alt="Mobile chat">
+</p>
+
+<p align="center">
+  <img src="screenshots/chat.png" width="70%" alt="Desktop chat">
+</p>
+
 ## ✨ Возможности
 
 - **💬 Real-time чаты** — мгновенная доставка через WebSocket, индикаторы печати, read receipts (✓✓)
@@ -34,14 +45,6 @@
 - **🛡 Админ-панель** — системные оповещения, управление пользователями
 - **🎨 Тёмная тема** — GitHub-dark палитра, кастомный скроллбар, анимации по всей UI
 - **📱 PWA + Android APK** — сайт, мобильное веб-приложение и APK из одного кода
-
-## 📸 Скриншоты
-
-<p align="center">
-  <sub>
-    <a href="https://nosignal.su">Открыть в браузере</a>
-  </sub>
-</p>
 
 ## 🧱 Архитектура
 
