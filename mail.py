@@ -4,24 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-LOGO_SVG = '''
-<svg width="56" height="56" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="14" fill="#0d1117"/>
-  <defs>
-    <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#58a6ff"/>
-      <stop offset="100%" stop-color="#1f6feb"/>
-    </linearGradient>
-  </defs>
-  <g transform="translate(4, 20) scale(2.5)">
-    <path d="M2 12h5l2-4 2 8 2-6 1 3h8" fill="none" stroke="url(#lg)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="13" y1="12" x2="22" y2="12" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
-    <circle cx="17" cy="12" r="1.5" fill="#e94560"/>
-    <line x1="15" y1="10" x2="19" y2="14" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="19" y1="10" x2="15" y2="14" stroke="#e94560" stroke-width="1.5" stroke-linecap="round"/>
-  </g>
-</svg>
-'''
+LOGO_IMG = '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACyElEQVR4nO2dQU7DMBBF06hbKrGiR2HBDSIktpyh5+EM3SJVvkEXHAVWSPQAoCClSlM7teNx/tj5T0JUJPXiP8/YToW6qgS4u3/4rRbI6ftrFTvG5AGWGrq0jOA3MXhZEd43M/g0Imqfmxh+OL6ZjVpi8OmrwVkBDF+OsSytAhi+PK5MvdYAko4rAZz96bBleyGA4adnmDFbEJizAM7++ehnzQoA8y+As39+usxZAWAoAMyK7QcLKwAMBYChADAUAIYCwFAAGAoAQwFgKAAMBYChADAUAIYCwFAAGAoAQwFgKAAMBYChADAUAIYCwFAAGAoAQwFgKAAMBYChADAUAIYCwFAAGAoAQwFgKAAMBYChADAUAIYCwFAAGAoAQwFgVAto3j6f25+qYFT+p3xjCd3stoeqQFRXwBJQJ6BxtJxSW5E6AUtDlYCm0FmejYAlUuc0+xsFFfLz9FimACk6Sd0Z4pa0kEC7eyUlqBDQCM9s3/FCAh3eIyVBhQDEFjYkUNc1CQnrSmloZrc92K61f4s9FUsFujl+VLEUVQFzBicxBlxAMzL7+79jxnJdjwlQKvzFVkBMkJLhT14DUu7Hjces91kH9vuX6+sCi+aUhXdM2qIrQAOqBBjLrPatiCpTVAgwE7aVOYeuTkDJn3glWYTnDss4DmUlVMK6/ZY3jZ8Lx9LtPFyCrLukAF5f3/3FH+0Tts1eTQtKcZDrXg8rNjZ8qTFUPAuai76EjWM/79qvu/b+rYTYg1kt9c3QqTHC684wuLEgXddiwu8yz7oFxYrqAvQJMkRYCGcBOVRBCkKCDBE2Rj/r4iogNdIP4y4EaK8CU8BhbZjxVQVol5CzIFu2bEFgrAJyrgKtuDJ1VoBWCcbRZjS3n7Es61tv1Coil+Bv5ecdbokP7FLiO3GDZzdFjBPaMSa3F4q4ZGqrFunvS5VxElgf/wC8sSQK/ZqzwQAAAABJRU5ErkJggg==" width="48" height="48" alt="No_Signal" style="display:block;border:0;outline:none;width:48px;height:48px;">'
 
 BASE_STYLES = '''
 body {
@@ -41,7 +24,7 @@ body {
 }
 .header {
     background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
-    padding: 32px 40px 24px;
+    padding: 28px 40px 20px;
     text-align: center;
 }
 .header-logo {
@@ -49,10 +32,11 @@ body {
     align-items: center;
     gap: 12px;
 }
-.header-logo svg {
+.header-logo img {
     width: 48px;
     height: 48px;
-    display: block;
+    border: 0;
+    outline: none;
 }
 .header-logo-text {
     font-size: 22px;
@@ -71,6 +55,16 @@ body {
 }
 .body-content p:last-child {
     margin-bottom: 0;
+}
+.body-content ul {
+    color: #333;
+    font-size: 15px;
+    line-height: 1.7;
+    padding-left: 20px;
+    margin: 12px 0;
+}
+.body-content li {
+    margin-bottom: 4px;
 }
 h1 {
     font-size: 18px;
@@ -186,7 +180,7 @@ def _build_html(body_html):
   <div class="container">
     <div class="header">
       <div class="header-logo">
-        {LOGO_SVG}
+        {LOGO_IMG}
         <span class="header-logo-text">No_Signal</span>
       </div>
     </div>
@@ -204,61 +198,63 @@ def _build_html(body_html):
 
 
 def send_password_reset_email(to_email, reset_url):
-    body = '''
-    <h1>Сброс пароля</h1>
-    <p>Вы запросили сброс пароля для вашего аккаунта в <strong>No_Signal</strong>.</p>
-    <div class="button-wrap">
-      <a href="''' + reset_url + '''" class="button">Сбросить пароль</a>
-    </div>
-    <div class="alert alert-warning">
-      <strong>Внимание:</strong> Ссылка действительна в течение <strong>1 часа</strong>.
-      Если вы не запрашивали сброс пароля — просто проигнорируйте это письмо.
-    </div>
-    <div class="fallback-link">
-      Если кнопка не работает, скопируйте ссылку в браузер:<br>
-      <a href="''' + reset_url + '''">''' + reset_url + '''</a>
-    </div>
-    '''
+    body = (
+        '<h1>Сброс пароля</h1>'
+        '<p>Вы запросили сброс пароля для вашего аккаунта в <strong>No_Signal</strong>.</p>'
+        '<div class="button-wrap">'
+        f'<a href="{reset_url}" class="button">Сбросить пароль</a>'
+        '</div>'
+        '<div class="alert alert-warning">'
+        '<strong>Внимание:</strong> Ссылка действительна в течение <strong>1 часа</strong>. '
+        'Если вы не запрашивали сброс пароля — просто проигнорируйте это письмо.'
+        '</div>'
+        '<div class="fallback-link">'
+        'Если кнопка не работает, скопируйте ссылку в браузер:<br>'
+        f'<a href="{reset_url}">{reset_url}</a>'
+        '</div>'
+    )
 
     return send_email(to_email, 'No_Signal — Сброс пароля', _build_html(body))
 
 
 def send_verification_email(to_email, verify_url, nickname):
-    body = '''
-    <h1>Подтверждение регистрации</h1>
-    <p>Привет, <strong>''' + nickname + '''</strong>!</p>
-    <p>Спасибо за регистрацию в <strong>No_Signal</strong>. Остался последний шаг &mdash; подтвердите ваш email.</p>
-    <div class="button-wrap">
-      <a href="''' + verify_url + '''" class="button">Подтвердить email</a>
-    </div>
-    <div class="alert alert-success">
-      После подтверждения вам станут доступны: чаты, файлы, голосовые сообщения, шифрование и real-time синхронизация.
-    </div>
-    <div class="alert alert-warning">
-      <strong>Внимание:</strong> Ссылка действительна в течение <strong>24 часов</strong>.
-      Если вы не регистрировались в No_Signal — просто проигнорируйте это письмо.
-    </div>
-    <div class="fallback-link">
-      Если кнопка не работает, скопируйте ссылку в браузер:<br>
-      <a href="''' + verify_url + '''">''' + verify_url + '''</a>
-    </div>
-    '''
+    body = (
+        '<h1>Подтверждение регистрации</h1>'
+        f'<p>Привет, <strong>{nickname}</strong>!</p>'
+        '<p>Спасибо за регистрацию в <strong>No_Signal</strong>. '
+        'Остался последний шаг &mdash; подтвердите ваш email.</p>'
+        '<div class="button-wrap">'
+        f'<a href="{verify_url}" class="button">Подтвердить email</a>'
+        '</div>'
+        '<div class="alert alert-success">'
+        'После подтверждения вам станут доступны: чаты, файлы, '
+        'голосовые сообщения, шифрование и real-time синхронизация.'
+        '</div>'
+        '<div class="alert alert-warning">'
+        '<strong>Внимание:</strong> Ссылка действительна в течение <strong>24 часов</strong>. '
+        'Если вы не регистрировались в No_Signal — просто проигнорируйте это письмо.'
+        '</div>'
+        '<div class="fallback-link">'
+        'Если кнопка не работает, скопируйте ссылку в браузер:<br>'
+        f'<a href="{verify_url}">{verify_url}</a>'
+        '</div>'
+    )
 
     return send_email(to_email, 'No_Signal — Подтверждение регистрации', _build_html(body))
 
 
 def send_test_email(to_email):
-    body = '''
-    <h1>Тестовое письмо</h1>
-    <div class="alert alert-success">
-      <strong>Всё работает!</strong> Email-интеграция No_Signal настроена корректно.
-    </div>
-    <p>Это тестовое письмо подтверждает, что система отправки email через Gmail SMTP функционирует правильно.</p>
-    <p>Теперь пользователи смогут:</p>
-    <ul style="color:#333;font-size:15px;line-height:1.7;padding-left:20px;">
-      <li>подтверждать email при регистрации</li>
-      <li>восстанавливать пароль через email</li>
-    </ul>
-    '''
+    body = (
+        '<h1>Тестовое письмо</h1>'
+        '<div class="alert alert-success">'
+        '<strong>Всё работает!</strong> Email-интеграция No_Signal настроена корректно.'
+        '</div>'
+        '<p>Это тестовое письмо подтверждает, что система отправки email через Gmail SMTP функционирует правильно.</p>'
+        '<p>Теперь пользователи смогут:</p>'
+        '<ul>'
+        '<li>подтверждать email при регистрации</li>'
+        '<li>восстанавливать пароль через email</li>'
+        '</ul>'
+    )
 
     return send_email(to_email, 'No_Signal — Тестовое письмо', _build_html(body))
