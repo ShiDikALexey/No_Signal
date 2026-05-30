@@ -256,6 +256,24 @@ python app.py
 > 
 > **Важно**: В production обязательно установите `SECRET_KEY` в `.env` файле!
 
+### Настройка Email (сброс пароля)
+
+No_Signal использует Gmail SMTP для отправки писем. Добавьте в `.env`:
+
+```env
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=your@gmail.com
+```
+
+Для пароля приложения: включите 2FA → https://myaccount.google.com/apppasswords
+
+```bash
+python test_mail.py your@email.com
+```
+
 ---
 
 ## Деплой
