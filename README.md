@@ -27,7 +27,6 @@
   <img src="https://img.shields.io/badge/gunicorn-499848?style=for-the-badge&logo=gunicorn&logoColor=white" alt="Gunicorn">
   <img src="https://img.shields.io/badge/nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx">
   <img src="https://img.shields.io/badge/Let%27s%20Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white" alt="Let's Encrypt">
-  <img src="https://img.shields.io/badge/AES%20128%20CBC-blue?style=for-the-badge" alt="AES-128">
 </p>
 
 > **⚠️ Тестовый релиз** — Функционал может содержать ошибки и будет дорабатываться.
@@ -54,7 +53,7 @@
 |---|---|
 | **Drag & drop** | Перетащите файл в окно — мгновенная отправка в текущий чат |
 | **50+ форматов** | Изображения, видео, аудио, документы, архивы, код |
-| **25 MB лимит** | Настроен в config.py, покрывает 95% сценариев |
+| **25 MB лимит** | Настроен на сервере, покрывает 95% сценариев |
 | **Превью перед отправкой** | Миниатюра для фото, имя+размер для остальных |
 | **Прогресс-бар** | Анимация загрузки файла на сервер |
 | **Auto-detection** | Определение типа файла: image/video/audio/document/archive/other |
@@ -118,13 +117,12 @@
 
 | | |
 |---|---|
-| **AES-128 CBC (Fernet)** | Сообщения шифруются перед сохранением в БД |
+| **Шифрование сообщений** | Сообщения шифруются перед сохранением в БД |
 | **CSRF защита** | `credentials: 'same-origin'` на всех API-запросах |
 | **Flask-Login** | Сессии с remember-me |
 | **UUID filenames** | Предотвращение path traversal и перезаписи |
 | **Admin decorator** | Защита админ-роутов с 403 fallback |
 | **Login required** | Все роуты, кроме рег/логин/сброс пароля |
-| **`.gitignore`** | Ключи и `.env` исключены из репозитория |
 
 ### 🎨 UI / UX
 
