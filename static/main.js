@@ -47,10 +47,29 @@
 
     function initSocket() {
         socket = io({
-            transports: ['websocket']
+            transports: ['websocket'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 50
         });
         socket.on('connect', function () {
             console.log('Socket connected');
+            if (currentChatId) {
+                socket.emit('join_chat', { chat_id: currentChatId });
+            }
+        });
+        socket.on('disconnect', function (reason) {
+            console.log('Socket disconnected:', reason);
+        });
+        socket.on('connect_error', function (err) {
+            console.log('Socket connect error:', err.message);
+        });
+        socket.on('reconnect', function (attempt) {
+            console.log('Socket reconnected after', attempt, 'attempts');
+            if (currentChatId) {
+                socket.emit('join_chat', { chat_id: currentChatId });
+            }
         });
         socket.on('new_message', onNewMessage);
         socket.on('chat_updated', onChatUpdated);
@@ -127,14 +146,18 @@ var typingDebounce = null;
         voiceBtn.addEventListener('mouseup', stopVoiceRecording);
         voiceBtn.addEventListener('mouseleave', cancelVoiceRecording);
         voiceBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            recordingCancelled = false;
             startVoiceRecording();
         });
         voiceBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
             if (!recordingCancelled && isRecording) {
                 stopVoiceRecording();
             }
         });
         voiceBtn.addEventListener('touchmove', function(e) {
+            e.preventDefault();
             var touch = e.touches[0];
             var rect = voiceBtn.getBoundingClientRect();
             if (touch.clientY < rect.top - 80) {

@@ -35,7 +35,7 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
-    socketio.init_app(app, cors_allowed_origins='*')
+    socketio.init_app(app, async_mode='threading', cors_allowed_origins='*', logger=False, engineio_logger=False)
     login_manager.init_app(app)
 
     from auth import auth
