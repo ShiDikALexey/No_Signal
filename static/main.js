@@ -1728,10 +1728,47 @@ var typingDebounce = null;
     }
 
     function initMobileViewport() {
+        if (!window.visualViewport) return;
+
         var messageInput = document.getElementById('message-input');
+        var messagesContainer = document.getElementById('messages');
+        var viewport = window.visualViewport;
+        var initialHeight = viewport.height;
+        var keyboardOpen = false;
+
+        function handleViewportResize() {
+            if (!messagesContainer) return;
+
+            var heightDiff = initialHeight - viewport.height;
+            var isKeyboardOpen = heightDiff > 150;
+
+            if (isKeyboardOpen && !keyboardOpen) {
+                keyboardOpen = true;
+                messagesContainer.style.scrollBehavior = 'auto';
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else if (!isKeyboardOpen && keyboardOpen) {
+                keyboardOpen = false;
+                messagesContainer.style.scrollBehavior = 'smooth';
+            }
+
+            if (keyboardOpen) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        viewport.addEventListener('resize', handleViewportResize);
+
         if (messageInput) {
             messageInput.addEventListener('focus', function () {
-                setTimeout(scrollToBottom, 300);
+                setTimeout(function () {
+                    if (messagesContainer) {
+                        messagesContainer.style.scrollBehavior = 'auto';
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        setTimeout(function () {
+                            messagesContainer.style.scrollBehavior = 'smooth';
+                        }, 500);
+                    }
+                }, 100);
             });
         }
     }
