@@ -34,13 +34,22 @@ class UserChatSettings(db.Model):
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     is_muted = db.Column(db.Boolean, default=False, nullable=False)
     
-    __table_args__ = (db.UniqueConstraint('user_id', 'chat_id', name='uq_user_chat'),)
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'chat_id', name='uq_user_chat'),
+        db.Index('idx_user_chat_settings_user', 'user_id'),
+        db.Index('idx_user_chat_settings_chat', 'chat_id'),
+    )
     
     user = db.relationship('User', backref='chat_settings')
     chat = db.relationship('Chat', backref='user_settings')
 
 
 class User(UserMixin, db.Model):
+    __table_args__ = (
+        db.Index('idx_user_email', 'email'),
+        db.Index('idx_user_nickname', 'nickname'),
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     nickname = db.Column(db.String(50), unique=True, nullable=False)
@@ -127,6 +136,11 @@ class Chat(db.Model):
 
 
 class Message(db.Model):
+    __table_args__ = (
+        db.Index('idx_message_chat_timestamp', 'chat_id', 'timestamp'),
+        db.Index('idx_message_sender', 'sender_id'),
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

@@ -27,6 +27,29 @@
         return div.innerHTML;
     }
 
+    function parseMarkdown(text) {
+        if (!text) return '';
+        
+        var escaped = escapeHtml(text);
+        
+        escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        escaped = escaped.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        escaped = escaped.replace(/__(.+?)__/g, '<strong>$1</strong>');
+        escaped = escaped.replace(/_(.+?)_/g, '<em>$1</em>');
+        
+        escaped = escaped.replace(/~~(.+?)~~/g, '<del>$1</del>');
+        
+        escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        escaped = escaped.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        
+        escaped = escaped.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        
+        escaped = escaped.replace(/\n/g, '<br>');
+        
+        return escaped;
+    }
+
     function showToast(message, type) {
         type = type || 'info';
         var container = document.getElementById('toast-container');
@@ -169,6 +192,12 @@
             if (e.target === this) closeModal();
         });
         document.getElementById('user-info-trigger').addEventListener('click', toggleProfileDropdown);
+        document.getElementById('user-info-trigger').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleProfileDropdown();
+            }
+        });
         document.getElementById('btn-change-nickname').addEventListener('click', showChangeNickname);
         document.getElementById('btn-account-settings').addEventListener('click', showAccountSettings);
         document.getElementById('search-input').addEventListener('input', function () {
@@ -188,6 +217,12 @@
         if (chatHeaderProfile) {
             chatHeaderProfile.addEventListener('click', function () {
                 toggleProfileDropdown();
+            });
+            chatHeaderProfile.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleProfileDropdown();
+                }
             });
         }
         document.getElementById('message-input').addEventListener('keydown', function (e) {
@@ -258,10 +293,41 @@ var typingDebounce = null;
     }
 
     function loadChats() {
+        showChatListSkeleton();
         api('GET', '/api/chats').then(function (data) {
             chats = data;
             renderChatList();
         });
+    }
+
+    function showChatListSkeleton() {
+        var list = document.getElementById('chat-list');
+        if (!list || chats.length > 0) return;
+        
+        var skeletonHtml = '';
+        for (var i = 0; i < 5; i++) {
+            skeletonHtml += '<div class="skeleton-chat-item">' +
+                '<div class="skeleton-avatar"></div>' +
+                '<div class="skeleton-info">' +
+                '<div class="skeleton-line skeleton-line-short"></div>' +
+                '<div class="skeleton-line skeleton-line-long"></div>' +
+                '</div></div>';
+        }
+        list.innerHTML = skeletonHtml;
+    }
+
+    function showMessagesSkeleton() {
+        var container = document.getElementById('messages');
+        if (!container) return;
+        
+        var skeletonHtml = '';
+        for (var i = 0; i < 8; i++) {
+            var isOwn = i % 3 === 0;
+            skeletonHtml += '<div class="skeleton-message ' + (isOwn ? 'own' : 'other') + '">' +
+                '<div class="skeleton-line skeleton-line-message"></div>' +
+                '</div>';
+        }
+        container.innerHTML = skeletonHtml;
     }
 
     function renderChatList(filter) {
@@ -401,6 +467,7 @@ var typingDebounce = null;
         var chat = chats.find(function (c) { return c.id === chatId; });
         if (chat) updateChatHeader(chat);
 
+        showMessagesSkeleton();
         api('GET', '/api/chats/' + chatId + '/messages').then(function (data) {
             var messages = data.messages || data;
             renderMessages(messages, chat ? chat.is_group : false);
@@ -500,7 +567,7 @@ var typingDebounce = null;
                 }
             }
             div.innerHTML =
-                (msg.text ? '<div class="msg-text">' + escapeHtml(msg.text) + '</div>' : '') +
+                (msg.text ? '<div class="msg-text">' + parseMarkdown(msg.text) + '</div>' : '') +
                 fileHtml +
                 '<div class="msg-time">' + escapeHtml(msg.timestamp) + statusHtml + '</div>';
         } else {
@@ -508,7 +575,7 @@ var typingDebounce = null;
             var senderHtml = isGrouped ? '' : '<div class="msg-sender" style="color:' + escapeHtml(msg.sender_avatar_color) + '">' + escapeHtml(msg.sender_nickname) + '</div>';
             div.innerHTML =
                 senderHtml +
-                (msg.text ? '<div class="msg-text">' + escapeHtml(msg.text) + '</div>' : '') +
+                (msg.text ? '<div class="msg-text">' + parseMarkdown(msg.text) + '</div>' : '') +
                 fileHtml +
                 '<div class="msg-time">' + escapeHtml(msg.timestamp) + '</div>';
         }
@@ -1291,11 +1358,14 @@ var typingDebounce = null;
 
     function toggleProfileDropdown() {
         var dropdown = document.getElementById('profile-dropdown');
+        var trigger = document.getElementById('user-info-trigger');
         if (dropdown.classList.contains('hidden')) {
             renderProfileDropdown();
             dropdown.classList.remove('hidden');
+            if (trigger) trigger.setAttribute('aria-expanded', 'true');
         } else {
             dropdown.classList.add('hidden');
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
         }
     }
 

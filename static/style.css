@@ -1059,6 +1059,49 @@ a:hover {
     font-size: 0.93em;
 }
 
+.msg-text code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.msg-text pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.msg-text pre code {
+    background: none;
+    padding: 0;
+}
+
+.msg-text a {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.msg-text a:hover {
+    color: var(--accent-hover);
+}
+
+.msg-text strong {
+    font-weight: 700;
+}
+
+.msg-text em {
+    font-style: italic;
+}
+
+.msg-text del {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
 .msg-time {
     font-size: 0.72em;
     color: rgba(255, 255, 255, 0.55);
@@ -2550,5 +2593,75 @@ a:hover {
     
     .toast {
         min-width: auto;
+    }
+}
+
+/* ========== Skeleton Loaders ========== */
+
+.skeleton-chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.skeleton-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s infinite;
+    flex-shrink: 0;
+}
+
+.skeleton-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s infinite;
+}
+
+.skeleton-line-short {
+    width: 40%;
+}
+
+.skeleton-line-long {
+    width: 80%;
+}
+
+.skeleton-line-message {
+    width: 70%;
+    height: 14px;
+}
+
+.skeleton-message {
+    padding: 10px 14px;
+    border-radius: 16px;
+    max-width: 70%;
+}
+
+.skeleton-message.own {
+    align-self: flex-end;
+}
+
+.skeleton-message.other {
+    align-self: flex-start;
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
     }
 }

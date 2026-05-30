@@ -369,8 +369,13 @@ pytest tests/ -v
 - ✅ **Архитектура**: Per-user настройки чатов (pin, archive, mute) через UserChatSettings
 - ✅ **Производительность**: Пагинация сообщений с cursor-based загрузкой
 - ✅ **Производительность**: Оптимизирован запрос списка чатов
+- ✅ **Производительность**: Добавлены индексы БД для Message, User, UserChatSettings
 - ✅ **UX**: Toast notifications вместо alert()
 - ✅ **UX**: Custom confirm dialogs вместо confirm()
+- ✅ **UX**: Skeleton loaders при загрузке чатов и сообщений
+- ✅ **UX**: Markdown поддержка в сообщениях (bold, italic, code, links, strikethrough)
+- ✅ **Accessibility**: ARIA атрибуты для всех интерактивных элементов
+- ✅ **Accessibility**: Keyboard navigation (Enter/Space для кнопок)
 - ✅ **Code quality**: Исправлен deprecated datetime.utcnow() на timezone-aware datetime.now(timezone.utc)
 - ✅ **Миграция**: Создан скрипт migrate.py для переноса данных в новую схему
 
