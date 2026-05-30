@@ -5,4 +5,6 @@ flask-login
 cryptography
 gunicorn
 eventlet
+gevent
+gevent-websocket
 psycopg2-binary
