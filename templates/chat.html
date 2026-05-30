@@ -65,6 +65,12 @@
 
         <div class="typing-indicator hidden" id="typing-indicator"></div>
 
+        <div class="system-banner hidden" id="system-banner">
+            <span class="system-banner-icon">⚠️</span>
+            <span class="system-banner-text" id="system-banner-text"></span>
+            <button class="system-banner-close" id="system-banner-close">&times;</button>
+        </div>
+
         <div class="input-area">
             <button class="attach-btn" id="attach-btn" title="Прикрепить файл">📎</button>
             <input type="file" id="file-input" hidden>
@@ -72,19 +78,19 @@
             <button class="emoji-btn" id="emoji-btn" title="Эмодзи">😊</button>
             <button class="voice-btn hidden" id="voice-btn" title="Голосовое сообщение">🎤</button>
             <button id="send-btn" title="Отправить">>></button>
+            <div class="voice-recording-overlay hidden" id="voice-recording-overlay">
+                <div class="voice-recording-content">
+                    <div class="voice-recording-indicator">
+                        <span class="recording-dot"></span>
+                        <span class="recording-time" id="recording-time">00:00</span>
+                    </div>
+                    <div class="voice-waveform" id="voice-waveform"></div>
+                    <button class="voice-recording-cancel-btn" type="button" id="voice-recording-cancel">Отмена</button>
+                </div>
+            </div>
         </div>
         <div class="file-preview hidden" id="file-preview"></div>
         <div class="emoji-picker hidden" id="emoji-picker"></div>
-        <div class="voice-recording-overlay hidden" id="voice-recording-overlay">
-            <div class="voice-recording-content">
-                <div class="voice-recording-indicator">
-                    <span class="recording-dot"></span>
-                    <span class="recording-time" id="recording-time">00:00</span>
-                </div>
-                <div class="voice-waveform" id="voice-waveform"></div>
-                <div class="voice-recording-hint">Отпустите для отправки, свайп вверх для отмены</div>
-            </div>
-        </div>
     </div>
 
     <div class="no-chat-selected" id="no-chat-selected">
@@ -115,7 +121,8 @@ window.CURRENT_USER = {
     nickname: "{{ current_user.nickname }}",
     avatarColor: "{{ current_user.avatar_color }}",
     avatarPhoto: "{{ current_user.avatar_photo or '' }}",
-    status: "{{ current_user.status or '' }}"
+    status: "{{ current_user.status or '' }}",
+    isAdmin: {{ 'true' if current_user.is_admin else 'false' }}
 };
 </script>
 <script src="/static/main.js"></script>

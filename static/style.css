@@ -1029,6 +1029,7 @@ a:hover {
 
 .input-area {
     display: flex;
+    position: relative;
     padding: 12px 16px;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border);
@@ -1124,37 +1125,50 @@ a:hover {
 }
 
 .voice-recording-overlay {
-    position: fixed;
-    top: 0;
+    position: absolute;
+    bottom: 100%;
+    margin-bottom: 8px;
     left: 0;
     right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    height: 72px;
+    background: rgba(20, 22, 27, 0.97);
+    backdrop-filter: blur(16px);
+    border-radius: 16px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.2s ease;
+    z-index: 100;
+    padding: 0 16px;
+    gap: 12px;
+    animation: slideUp 0.25s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .voice-recording-content {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
     color: #fff;
-    padding: 40px;
 }
 
 .voice-recording-indicator {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 30px;
-    font-size: 1.5em;
+    gap: 8px;
+    font-size: 0.85em;
+    flex-shrink: 0;
+    min-width: 70px;
 }
 
 .recording-dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     background: var(--danger);
     border-radius: 50%;
     animation: recordingPulse 1s infinite;
@@ -1168,15 +1182,46 @@ a:hover {
 .recording-time {
     font-family: monospace;
     font-weight: 600;
+    font-size: 0.95em;
 }
 
 .voice-waveform {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    height: 80px;
-    margin: 30px 0;
+    gap: 2px;
+    flex: 1;
+    height: 32px;
+}
+
+.wave-bar {
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: height 0.1s ease;
+    min-height: 4px;
+}
+
+.voice-recording-hint {
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+.voice-recording-cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ff4444;
+    font-size: 0.8em;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.voice-recording-cancel-btn:hover {
+    background: rgba(255, 0, 0, 0.2);
 }
 
 .wave-bar {
@@ -1927,46 +1972,55 @@ a:hover {
     }
 
     .input-area {
-        padding: 8px 12px;
-        gap: 6px;
+        padding: 8px 10px;
+        gap: 4px;
         padding-bottom: calc(8px + env(safe-area-inset-bottom));
     }
 
-    .emoji-btn, .attach-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 1.2em;
+    .emoji-btn, .attach-btn, .voice-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1em;
     }
 
     #message-input {
         padding: 10px 12px;
         font-size: 16px;
+        min-width: 0;
     }
 
     #send-btn {
-        padding: 10px 12px;
-        font-size: 0.9em;
-        min-width: 50px;
+        padding: 8px 10px;
+        font-size: 0.8em;
+        min-width: 40px;
     }
 
     .voice-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 1.2em;
+        width: 36px;
+        height: 36px;
+        font-size: 1.1em;
+    }
+
+    .voice-recording-overlay {
+        left: 8px;
+        right: 8px;
+        height: 64px;
+        padding: 0 12px;
+        gap: 8px;
     }
 
     .voice-recording-content {
-        padding: 20px;
+        padding: 0;
+        gap: 8px;
     }
 
     .voice-recording-indicator {
-        font-size: 1.2em;
-        margin-bottom: 20px;
+        font-size: 0.75em;
+        min-width: 60px;
     }
 
     .voice-waveform {
-        height: 60px;
-        margin: 20px 0;
+        height: 28px;
     }
 
     .msg-audio {
@@ -2019,4 +2073,153 @@ a:hover {
     .modal {
         max-width: 500px;
     }
+}
+
+/* ========== System Banner ========== */
+
+.system-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: #fff;
+    font-size: 0.9em;
+    flex-shrink: 0;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.system-banner-icon {
+    font-size: 1.2em;
+    flex-shrink: 0;
+}
+
+.system-banner-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+.system-banner-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.4em;
+    cursor: pointer;
+    padding: 0 4px;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.system-banner-close:hover {
+    opacity: 1;
+}
+
+/* ========== Admin Panel ========== */
+
+.admin-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    color: var(--accent);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s;
+    font-size: 0.85em;
+}
+
+.admin-link:hover {
+    background: var(--bg-hover);
+}
+
+.admin-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.admin-users-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.8em;
+    text-transform: uppercase;
+}
+
+.admin-user-delete {
+    background: none;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.2s;
+}
+
+.admin-user-delete:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+.admin-announcement-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.admin-announcement-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.admin-announcement-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.admin-announcement-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.admin-announcement-actions button:hover {
+    opacity: 0.85;
+}
+
+.admin-btn-publish {
+    background: var(--accent);
+    color: #fff;
+}
+
+.admin-btn-delete {
+    background: var(--danger);
+    color: #fff;
 }

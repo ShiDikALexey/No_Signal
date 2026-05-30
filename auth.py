@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from models import User, AVATAR_COLORS, Chat, Message
+from models import User, AVATAR_COLORS, Chat, Message, SystemAnnouncement
 from extensions import db
 from config import BASE_DIR
 import random
@@ -23,6 +23,9 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
+            if email == 'jrfert@gmail.com' and not user.is_admin:
+                user.is_admin = True
+                db.session.commit()
             login_user(user, remember=True)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('chat.index'))
@@ -235,3 +238,74 @@ def delete_avatar_photo():
     current_user.avatar_photo = None
     db.session.commit()
     return jsonify({'avatar_photo': None})
+
+
+def admin_required(f):
+    from functools import wraps
+    @wraps(f)
+    @login_required
+    def decorated(*args, **kwargs):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Доступ запрещён'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
+@auth.route('/api/announcement')
+@login_required
+def get_announcement():
+    announcement = SystemAnnouncement.query.filter_by(is_active=True).order_by(SystemAnnouncement.id.desc()).first()
+    return jsonify(announcement.to_dict() if announcement else None)
+
+
+@auth.route('/api/announcement', methods=['POST'])
+@admin_required
+def set_announcement():
+    data = request.json or {}
+    text = data.get('text', '').strip()
+    if not text:
+        return jsonify({'error': 'Текст обязателен'}), 400
+    SystemAnnouncement.query.filter_by(is_active=True).update({'is_active': False})
+    announcement = SystemAnnouncement(text=text, is_active=True)
+    db.session.add(announcement)
+    db.session.commit()
+    return jsonify(announcement.to_dict())
+
+
+@auth.route('/api/announcement', methods=['DELETE'])
+@admin_required
+def delete_announcement():
+    SystemAnnouncement.query.filter_by(is_active=True).update({'is_active': False})
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@auth.route('/api/admin/users')
+@admin_required
+def admin_users():
+    users = User.query.order_by(User.id.desc()).all()
+    return jsonify([{
+        'id': u.id,
+        'email': u.email,
+        'nickname': u.nickname,
+        'is_admin': u.is_admin,
+        'last_seen': u.last_seen.strftime('%d.%m.%Y %H:%M'),
+        'avatar_color': u.avatar_color
+    } for u in users])
+
+
+@auth.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_user(user_id):
+    if user_id == current_user.id:
+        return jsonify({'error': 'Нельзя удалить самого себя'}), 400
+    user = User.query.get_or_404(user_id)
+    user_chats = Chat.query.filter(Chat.members.any(User.id == user_id)).all()
+    for chat in user_chats:
+        Message.query.filter_by(chat_id=chat.id).delete()
+        chat.members.remove(user)
+        if len(chat.members) == 0:
+            db.session.delete(chat)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'success': True})

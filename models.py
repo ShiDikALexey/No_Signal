@@ -32,6 +32,7 @@ class User(UserMixin, db.Model):
     avatar_color = db.Column(db.String(7), nullable=False)
     avatar_photo = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(100), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -42,7 +43,8 @@ class User(UserMixin, db.Model):
             'avatar_color': self.avatar_color,
             'avatar_photo': self.avatar_photo,
             'status': self.status,
-            'is_online': is_online
+            'is_online': is_online,
+            'is_admin': self.is_admin
         }
 
 
@@ -126,4 +128,19 @@ class Message(db.Model):
             'file_url': self.file_url,
             'file_name': self.file_name,
             'file_size': self.file_size
+        }
+
+
+class SystemAnnouncement(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'text': self.text,
+            'is_active': self.is_active,
+            'created_at': self.created_at.strftime('%H:%M %d.%m.%Y')
         }

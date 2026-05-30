@@ -180,22 +180,22 @@
         voiceBtn.addEventListener('mouseup', stopVoiceRecording);
         voiceBtn.addEventListener('mouseleave', cancelVoiceRecording);
         voiceBtn.addEventListener('touchstart', function(e) {
-            e.preventDefault();
             startVoiceRecording();
         });
         voiceBtn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            if (!recordingCancelled) {
+            if (!recordingCancelled && isRecording) {
                 stopVoiceRecording();
             }
         });
         voiceBtn.addEventListener('touchmove', function(e) {
             var touch = e.touches[0];
             var rect = voiceBtn.getBoundingClientRect();
-            if (touch.clientY < rect.top - 50) {
+            if (touch.clientY < rect.top - 80) {
                 cancelVoiceRecording();
             }
         });
+
+        document.getElementById('voice-recording-cancel').addEventListener('click', cancelVoiceRecording);
 
         toggleVoiceSendButtons();
     }
@@ -1491,10 +1491,10 @@
     function createWaveformBars() {
         var waveform = document.getElementById('voice-waveform');
         waveform.innerHTML = '';
-        for (var i = 0; i < 30; i++) {
+        for (var i = 0; i < 15; i++) {
             var bar = document.createElement('div');
             bar.className = 'wave-bar';
-            bar.style.height = '8px';
+            bar.style.height = '4px';
             waveform.appendChild(bar);
         }
     }
@@ -1510,7 +1510,7 @@
 
         bars.forEach(function(bar, i) {
             var value = dataArray[i * step] || 0;
-            var height = Math.max(8, (value / 255) * 80);
+            var height = Math.max(4, (value / 255) * 28);
             bar.style.height = height + 'px';
         });
 
@@ -1672,5 +1672,115 @@
         updateViewport();
     }
 
+    function loadSystemBanner() {
+        api('GET', '/auth/api/announcement').then(function(data) {
+            if (data && data.is_active) {
+                var banner = document.getElementById('system-banner');
+                var textEl = document.getElementById('system-banner-text');
+                if (banner && textEl) {
+                    textEl.textContent = data.text;
+                    banner.classList.remove('hidden');
+                }
+            }
+        }).catch(function() {});
+    }
+
+    function initSystemBanner() {
+        var closeBtn = document.getElementById('system-banner-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                document.getElementById('system-banner').classList.add('hidden');
+            });
+        }
+        loadSystemBanner();
+    }
+
+    function initAdminPanel() {
+        if (!currentUser.isAdmin) return;
+
+        var sidebarFooter = document.querySelector('.sidebar-footer');
+        if (!sidebarFooter) return;
+
+        var adminLink = document.createElement('div');
+        adminLink.className = 'admin-link';
+        adminLink.innerHTML = '<span>⚙️</span><span>Админ-панель</span>';
+        adminLink.addEventListener('click', showAdminPanel);
+        sidebarFooter.insertBefore(adminLink, sidebarFooter.firstChild);
+    }
+
+    function showAdminPanel() {
+        var modal = document.getElementById('modal');
+        var title = document.getElementById('modal-title');
+        var content = document.getElementById('modal-content');
+        var overlay = document.getElementById('modal-overlay');
+
+        title.textContent = 'Админ-панель';
+        content.innerHTML =
+            '<div class="admin-announcement-form">' +
+            '<h4>📢 Системное оповещение</h4>' +
+            '<textarea id="announcement-text" placeholder="Текст оповещения для всех пользователей..."></textarea>' +
+            '<div class="admin-announcement-actions">' +
+            '<button class="admin-btn-delete" id="admin-delete-announcement">Удалить</button>' +
+            '<button class="admin-btn-publish" id="admin-publish-announcement">Опубликовать</button>' +
+            '</div></div>' +
+            '<hr style="border-color:var(--border);margin:20px 0;">' +
+            '<h4>👥 Пользователи (<span id="admin-users-count">...</span>)</h4>' +
+            '<div id="admin-users-table-wrapper" style="max-height:300px;overflow-y:auto;"></div>';
+
+        overlay.classList.remove('hidden');
+
+        var publishBtn = document.getElementById('admin-publish-announcement');
+        var deleteBtn = document.getElementById('admin-delete-announcement');
+        var textarea = document.getElementById('announcement-text');
+
+        publishBtn.addEventListener('click', function() {
+            var text = textarea.value.trim();
+            if (!text) { alert('Введите текст оповещения'); return; }
+            api('POST', '/auth/api/announcement', { text: text }).then(function(r) {
+                if (r.error) { alert(r.error); return; }
+                alert('Оповещение опубликовано!');
+                overlay.classList.add('hidden');
+            });
+        });
+
+        deleteBtn.addEventListener('click', function() {
+            api('DELETE', '/auth/api/announcement').then(function() {
+                alert('Оповещение удалено');
+                overlay.classList.add('hidden');
+            });
+        });
+
+        api('GET', '/auth/api/admin/users').then(function(users) {
+            document.getElementById('admin-users-count').textContent = users.length;
+            var html = '<table class="admin-users-table"><thead><tr><th>ID</th><th>Ник</th><th>Email</th><th>Роль</th><th>Был</th><th></th></tr></thead><tbody>';
+            users.forEach(function(u) {
+                html += '<tr>' +
+                    '<td>' + u.id + '</td>' +
+                    '<td>' + escapeHtml(u.nickname) + '</td>' +
+                    '<td>' + escapeHtml(u.email) + '</td>' +
+                    '<td>' + (u.is_admin ? '👑 Админ' : '👤') + '</td>' +
+                    '<td>' + escapeHtml(u.last_seen) + '</td>' +
+                    '<td><button class="admin-user-delete" data-uid="' + u.id + '" data-name="' + escapeHtml(u.nickname) + '">Удалить</button></td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('admin-users-table-wrapper').innerHTML = html;
+
+            document.querySelectorAll('.admin-user-delete').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var uid = this.dataset.uid;
+                    var name = this.dataset.name;
+                    if (!confirm('Удалить пользователя ' + name + '? Все его чаты и сообщения будут удалены.')) return;
+                    api('DELETE', '/auth/api/admin/users/' + uid).then(function(r) {
+                        if (r.error) { alert(r.error); return; }
+                        showAdminPanel();
+                    });
+                });
+            });
+        });
+    }
+
+    initSystemBanner();
+    initAdminPanel();
     init();
 })();
