@@ -1120,17 +1120,48 @@ var typingDebounce = null;
 
     function showChangeNickname() {
         document.getElementById('profile-dropdown').classList.add('hidden');
-        var newNickname = prompt('Введите новый никнейм:', currentUser.nickname);
-        if (!newNickname || newNickname.trim() === currentUser.nickname) return;
+        var overlay = document.getElementById('modal-overlay');
+        var title = document.getElementById('modal-title');
+        var content = document.getElementById('modal-content');
 
-        api('POST', '/auth/api/profile/nickname', { nickname: newNickname.trim() }).then(function (result) {
-            if (result.error) {
-                alert(result.error);
+        title.textContent = 'Смена никнейма';
+        content.innerHTML =
+            '<div class="nickname-change-form">' +
+            '<label>Новый никнейм</label>' +
+            '<input type="text" id="nickname-input" value="' + escapeHtml(currentUser.nickname) + '" maxlength="30" autocomplete="off">' +
+            '<div class="nickname-hint">От 2 до 30 символов</div>' +
+            '<div class="nickname-buttons">' +
+            '<button class="btn-cancel" id="nickname-cancel">Отмена</button>' +
+            '<button class="btn-save" id="nickname-save">Сохранить</button>' +
+            '</div></div>';
+
+        overlay.classList.remove('hidden');
+
+        var input = document.getElementById('nickname-input');
+        input.focus();
+        input.select();
+
+        document.getElementById('nickname-cancel').addEventListener('click', closeModal);
+        document.getElementById('nickname-save').addEventListener('click', function () {
+            var newNickname = input.value.trim();
+            if (!newNickname || newNickname === currentUser.nickname) {
+                closeModal();
                 return;
             }
-            currentUser.nickname = result.nickname;
-            window.CURRENT_USER.nickname = result.nickname;
-            renderCurrentUser();
+            api('POST', '/auth/api/profile/nickname', { nickname: newNickname }).then(function (result) {
+                if (result.error) {
+                    alert(result.error);
+                    return;
+                }
+                currentUser.nickname = result.nickname;
+                window.CURRENT_USER.nickname = result.nickname;
+                renderCurrentUser();
+                closeModal();
+            });
+        });
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') document.getElementById('nickname-save').click();
         });
     }
 

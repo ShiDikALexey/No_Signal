@@ -25,6 +25,8 @@
   <img src="https://img.shields.io/badge/socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO">
 </p>
 
+> **⚠️ TEST RELEASE** — Это тестовый запуск, а не финальный релиз. Функционал может содержать ошибки и будет дорабатываться.
+
 ---
 
 ## Возможности
@@ -91,6 +93,15 @@ python app.py
 ```
 
 Открой `http://localhost:8080` и зарегистрируйся.
+
+---
+
+## Тесты
+
+```bash
+pip install pytest
+pytest tests/ -v
+```
 
 ---
 
