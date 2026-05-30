@@ -864,7 +864,8 @@ var typingDebounce = null;
                     '<div class="user-item-nickname">' + escapeHtml(u.nickname) + (u.is_online ? ' <span class="online-dot"></span>' : '') + '</div>' +
                     '<div class="user-item-status' + (u.is_online ? ' online' : '') + '">' + (u.is_online ? 'В сети' : 'Не в сети') + '</div>' +
                     '</div>';
-                item.addEventListener('click', function () {
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation();
                     startPrivateChat(u.id);
                 });
                 list.appendChild(item);
@@ -906,7 +907,8 @@ var typingDebounce = null;
                     '<div class="user-item-status' + (u.is_online ? ' online' : '') + '">' + (u.is_online ? 'В сети' : 'Не в сети') + '</div>' +
                     '</div>' +
                     '<div style="margin-left:auto;font-size:1.2em;color:' + (isSelected ? 'var(--accent)' : 'var(--text-muted)') + '">' + (isSelected ? '&#10003;' : '') + '</div>';
-                item.addEventListener('click', function () {
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation();
                     toggleGroupMember(u.id, u.nickname, u.avatar_color);
                 });
                 list.appendChild(item);
@@ -969,6 +971,9 @@ var typingDebounce = null;
                 renderChatList();
             }
             selectChat(chat.id);
+        }).catch(function (err) {
+            console.error('startPrivateChat error:', err);
+            showToast('Ошибка создания чата', 'error');
         });
     }
 
@@ -990,6 +995,9 @@ var typingDebounce = null;
                 renderChatList();
             }
             selectChat(chat.id);
+        }).catch(function (err) {
+            console.error('createGroupChat error:', err);
+            showToast('Ошибка создания группы', 'error');
         });
     }
 
