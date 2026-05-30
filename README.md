@@ -33,6 +33,19 @@
 
 ---
 
+## 📸 Скриншоты
+
+<p align="center">
+  <img src="screenshots/login.png" width="45%" alt="Login">
+  <img src="screenshots/chat-mobile.png" width="22%" alt="Mobile">
+</p>
+
+<p align="center">
+  <img src="screenshots/chat.png" width="70%" alt="Chat">
+</p>
+
+---
+
 ## Особенности
 
 ### 💬 Сообщения
