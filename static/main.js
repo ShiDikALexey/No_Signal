@@ -502,6 +502,7 @@ var typingDebounce = null;
         socket.emit('join_chat', { chat_id: chatId });
         socket.emit('mark_read', { chat_id: chatId });
 
+        showingArchive = false;
         if (chat) {
             chat.unread_count = 0;
             renderChatList();
@@ -724,6 +725,7 @@ var typingDebounce = null;
             appendMessage(msg, true, false, isGroup);
             socket.emit('mark_read', { chat_id: currentChatId });
         }
+        showingArchive = false;
         loadChats();
     }
 
@@ -745,6 +747,7 @@ var typingDebounce = null;
         } else {
             chats.unshift(chatData);
         }
+        showingArchive = false;
         renderChatList(document.getElementById('search-input').value.trim().toLowerCase());
     }
 
@@ -752,6 +755,7 @@ var typingDebounce = null;
         var exists = chats.some(function (c) { return c.id === chatData.id; });
         if (!exists) {
             chats.unshift(chatData);
+            showingArchive = false;
             renderChatList();
         }
     }
@@ -1017,6 +1021,7 @@ var typingDebounce = null;
             var exists = chats.some(function (c) { return c.id === chat.id; });
             if (!exists) {
                 chats.unshift(chat);
+                showingArchive = false;
                 renderChatList();
             }
             selectChat(chat.id);
@@ -1041,6 +1046,7 @@ var typingDebounce = null;
             var exists = chats.some(function (c) { return c.id === chat.id; });
             if (!exists) {
                 chats.unshift(chat);
+                showingArchive = false;
                 renderChatList();
             }
             selectChat(chat.id);

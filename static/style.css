@@ -197,6 +197,7 @@ a:hover {
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    position: relative;
 }
 
 .sidebar-header {
