@@ -29,7 +29,7 @@
   <img src="https://img.shields.io/badge/Let%27s%20Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white" alt="Let's Encrypt">
 </p>
 
-> **v0.4.0** — Почтовый клиент, улучшенная безопасность и UX.
+> **v0.5.0** — Почтовый клиент, Android APK, аудит безопасности, улучшенная безопасность и UX.
 
 ---
 
@@ -234,7 +234,7 @@ No_Signal следует принципам доступности:
 
 ## Changelog
 
-### v0.4.0 (текущий)
+### v0.5.0 (текущий)
 - ✅ **Безопасность**: Убран hardcoded admin email
 - ✅ **Безопасность**: SECRET_KEY теперь генерируется автоматически или берётся из .env
 - ✅ **Безопасность**: Добавлен Flask-Limiter для rate limiting на критические endpoints
