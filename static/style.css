@@ -25,7 +25,7 @@
 
 html, body {
     height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
@@ -51,7 +51,9 @@ a:hover {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
-    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M2 30h5l2-4 2 8 2-6 1 3h8' fill='none' stroke='%2358a6ff' stroke-width='0.4' stroke-linecap='round' stroke-linejoin='round' opacity='0.08'/%3E%3C/svg%3E") repeat,
+        linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
 }
 
 .auth-card {
@@ -223,8 +225,8 @@ a:hover {
 }
 
 .logo-icon {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     flex-shrink: 0;
 }
 
@@ -273,6 +275,8 @@ a:hover {
 .chat-list {
     flex: 1;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
 .chat-list::-webkit-scrollbar {
@@ -935,6 +939,8 @@ a:hover {
     gap: 6px;
     background: var(--bg-primary);
     scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
 .messages::-webkit-scrollbar {
@@ -1057,49 +1063,6 @@ a:hover {
 
 .msg-text {
     font-size: 0.93em;
-}
-
-.msg-text code {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-}
-
-.msg-text pre {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 12px;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 8px 0;
-}
-
-.msg-text pre code {
-    background: none;
-    padding: 0;
-}
-
-.msg-text a {
-    color: var(--accent);
-    text-decoration: underline;
-}
-
-.msg-text a:hover {
-    color: var(--accent-hover);
-}
-
-.msg-text strong {
-    font-weight: 700;
-}
-
-.msg-text em {
-    font-style: italic;
-}
-
-.msg-text del {
-    text-decoration: line-through;
-    opacity: 0.7;
 }
 
 .msg-time {
@@ -1301,20 +1264,6 @@ a:hover {
     gap: 2px;
     flex: 1;
     height: 32px;
-}
-
-.wave-bar {
-    width: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: height 0.1s ease;
-    min-height: 4px;
-}
-
-.voice-recording-hint {
-    font-size: 0.75em;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
 }
 
 .voice-recording-cancel-btn {
@@ -1769,7 +1718,9 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-primary);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M2 30h5l2-4 2 8 2-6 1 3h8' fill='none' stroke='%2358a6ff' stroke-width='0.4' stroke-linecap='round' stroke-linejoin='round' opacity='0.05'/%3E%3C/svg%3E") repeat,
+        var(--bg-primary);
 }
 
 .no-chat-content {
@@ -2095,13 +2046,18 @@ a:hover {
         transform: translateX(-50%);
         width: calc(100% - 32px);
         max-width: 320px;
+        position: fixed;
+        bottom: auto;
+        top: 60px;
     }
 
     .emoji-picker {
+        position: fixed;
         width: calc(100% - 32px);
         left: 16px;
         right: 16px;
-        bottom: 70px;
+        bottom: calc(70px + env(safe-area-inset-bottom));
+        height: 360px;
     }
 
     .context-menu {
@@ -2379,7 +2335,7 @@ a:hover {
     border: 2px solid var(--border);
     border-radius: 10px;
     background: var(--bg-secondary);
-    color: var(--text);
+    color: var(--text-primary);
     font-size: 1em;
     outline: none;
     transition: border-color 0.2s;
@@ -2417,7 +2373,7 @@ a:hover {
 
 .btn-cancel {
     background: var(--bg-secondary);
-    color: var(--text);
+    color: var(--text-primary);
     border: 1px solid var(--border);
 }
 
@@ -2426,242 +2382,19 @@ a:hover {
     color: #fff;
 }
 
-/* ========== Toast Notifications ========== */
+/* ========== Accessibility: prefers-reduced-motion ========== */
 
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-width: 400px;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    animation: toastSlideIn 0.3s ease;
-    min-width: 280px;
-}
-
-.toast-hiding {
-    animation: toastSlideOut 0.3s ease forwards;
-}
-
-@keyframes toastSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }
 
-@keyframes toastSlideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
+/* ========== Firefox scrollbar for emoji-grid ========== */
 
-.toast-message {
-    flex: 1;
-    font-size: 0.9em;
-    color: var(--text-primary);
-}
-
-.toast-close {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 1.3em;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    transition: color 0.15s;
-}
-
-.toast-close:hover {
-    color: var(--text-primary);
-}
-
-.toast-success {
-    border-left: 4px solid var(--success);
-}
-
-.toast-error {
-    border-left: 4px solid var(--danger);
-}
-
-.toast-info {
-    border-left: 4px solid var(--accent);
-}
-
-.toast-warning {
-    border-left: 4px solid #e67e22;
-}
-
-/* ========== Confirm Dialog ========== */
-
-.confirm-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10001;
-    animation: fadeIn 0.2s ease;
-}
-
-.confirm-dialog {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    animation: scaleIn 0.2s ease;
-}
-
-.confirm-message {
-    font-size: 0.95em;
-    color: var(--text-primary);
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-.confirm-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.confirm-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    font-size: 0.9em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.confirm-btn-cancel {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-.confirm-btn-cancel:hover {
-    background: var(--bg-hover);
-}
-
-.confirm-btn-ok {
-    background: var(--danger);
-    color: #fff;
-}
-
-.confirm-btn-ok:hover {
-    background: #c73852;
-}
-
-@media (max-width: 768px) {
-    .toast-container {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        max-width: none;
-    }
-    
-    .toast {
-        min-width: auto;
-    }
-}
-
-/* ========== Skeleton Loaders ========== */
-
-.skeleton-chat-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    gap: 12px;
-}
-
-.skeleton-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
-    background-size: 200% 100%;
-    animation: skeletonShimmer 1.5s infinite;
-    flex-shrink: 0;
-}
-
-.skeleton-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.skeleton-line {
-    height: 12px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
-    background-size: 200% 100%;
-    animation: skeletonShimmer 1.5s infinite;
-}
-
-.skeleton-line-short {
-    width: 40%;
-}
-
-.skeleton-line-long {
-    width: 80%;
-}
-
-.skeleton-line-message {
-    width: 70%;
-    height: 14px;
-}
-
-.skeleton-message {
-    padding: 10px 14px;
-    border-radius: 16px;
-    max-width: 70%;
-}
-
-.skeleton-message.own {
-    align-self: flex-end;
-}
-
-.skeleton-message.other {
-    align-self: flex-start;
-}
-
-@keyframes skeletonShimmer {
-    0% {
-        background-position: -200% 0;
-    }
-    100% {
-        background-position: 200% 0;
-    }
+.emoji-grid {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
