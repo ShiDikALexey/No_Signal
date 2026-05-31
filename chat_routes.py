@@ -10,7 +10,21 @@ import uuid
 
 chat = Blueprint('chat', __name__)
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'zip', 'rar', '7z', 'tar', 'gz', 'exe', 'apk', 'dmg', 'iso', 'json', 'xml', 'csv', 'py', 'js', 'html', 'css', 'sql', 'sh', 'bat'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'zip', 'rar', '7z', 'tar', 'gz', 'json', 'xml', 'csv'}
+
+ALLOWED_MIMES = {
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp',
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac',
+    'application/pdf',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain', 'application/rtf',
+    'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
+    'application/x-tar', 'application/gzip',
+    'application/json', 'application/xml', 'text/csv',
+}
 
 
 def allowed_file(filename):
@@ -19,7 +33,7 @@ def allowed_file(filename):
 
 def get_file_type(filename):
     ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-    image_exts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'}
+    image_exts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
     video_exts = {'mp4', 'webm', 'mov', 'avi', 'mkv'}
     audio_exts = {'mp3', 'wav', 'ogg', 'flac'}
     doc_exts = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv', 'json', 'xml'}
@@ -189,11 +203,14 @@ def upload_file():
     if not allowed_file(file.filename):
         return jsonify({'error': 'Недопустимый тип файла'}), 400
 
+    if file.content_type and file.content_type not in ALLOWED_MIMES:
+        return jsonify({'error': 'Недопустимый формат файла'}), 400
+
     upload_folder = current_app.config['UPLOAD_FOLDER']
     os.makedirs(upload_folder, exist_ok=True)
 
     original_name = secure_filename(file.filename) or 'file'
-    unique_name = str(uuid.uuid4())[:8] + '_' + original_name
+    unique_name = uuid.uuid4().hex + '_' + original_name
     file_path = os.path.join(upload_folder, unique_name)
     file.save(file_path)
 

@@ -1,4 +1,5 @@
 import os
+import sys
 from cryptography.fernet import Fernet
 
 KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.encryption_key')
@@ -12,9 +13,12 @@ def get_or_create_key():
     if os.path.exists(KEY_FILE):
         with open(KEY_FILE, 'rb') as f:
             return f.read()
-    key = Fernet.generate_key()
+
+    import secrets
+    key = secrets.token_hex(16).encode('utf-8')
     with open(KEY_FILE, 'wb') as f:
         f.write(key)
+    print('WARNING: ENCRYPTION_KEY not set. Generated temporary key. Set in .env for production.', file=sys.stderr)
     return key
 
 
@@ -34,4 +38,4 @@ def decrypt(ciphertext):
     try:
         return _fernet.decrypt(ciphertext.encode('utf-8')).decode('utf-8')
     except Exception:
-        return ciphertext
+        return ''

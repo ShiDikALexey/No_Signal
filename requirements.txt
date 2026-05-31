@@ -3,6 +3,7 @@ flask-socketio
 flask-sqlalchemy
 flask-login
 flask-limiter
+flask-wtf
 cryptography
 gunicorn
 eventlet

@@ -67,6 +67,9 @@ def register_socket_handlers(socketio):
 
         if (not text and not file_url) or not chat_id:
             return
+        
+        if text and len(text) > 2000:
+            return
 
         chat = Chat.query.get(chat_id)
         if not chat or current_user not in chat.members:

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from urllib.parse import urlparse
 from models import User, AVATAR_COLORS, Chat, Message, SystemAnnouncement
 from extensions import db, limiter
 from config import BASE_DIR
@@ -12,7 +13,23 @@ import uuid
 import secrets
 from datetime import datetime, timezone, timedelta
 
+import re
+
 auth = Blueprint('auth', __name__, url_prefix='/auth')
+
+
+def _is_safe_redirect(target):
+    if not target:
+        return False
+    if target.startswith('/') and not target.startswith('//'):
+        return True
+    parsed = urlparse(target)
+    allowed = {'nosignal.su', 'www.nosignal.su', 'localhost', '127.0.0.1'}
+    return parsed.hostname in allowed
+
+
+def _is_valid_email(email):
+    return re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$', email) is not None
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -32,7 +49,9 @@ def login():
                 return render_template('login.html')
             login_user(user, remember=True)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('chat.index'))
+            if _is_safe_redirect(next_page):
+                return redirect(next_page)
+            return redirect(url_for('chat.index'))
         else:
             flash('Неверный email или пароль', 'error')
 
@@ -56,8 +75,12 @@ def register():
             errors.append('Заполните все поля')
         if len(nickname) < 2:
             errors.append('Никнейм должен быть не менее 2 символов')
-        if len(password) < 6:
-            errors.append('Пароль должен быть не менее 6 символов')
+        if len(nickname) > 24:
+            errors.append('Никнейм не должен превышать 24 символа')
+        if len(password) < 8:
+            errors.append('Пароль должен быть не менее 8 символов')
+        if not _is_valid_email(email):
+            errors.append('Некорректный формат email')
         if password != confirm_password:
             errors.append('Пароли не совпадают')
         if User.query.filter_by(email=email).first():
@@ -112,7 +135,7 @@ def reset_password():
 
         if not email:
             flash('Введите email', 'error')
-        elif len(new_password) < 6:
+        elif len(new_password) < 8:
             flash('Пароль должен быть не менее 6 символов', 'error')
         elif new_password != confirm_password:
             flash('Пароли не совпадают', 'error')
@@ -265,7 +288,7 @@ def change_password():
     if not check_password_hash(current_user.password_hash, old_password):
         return jsonify({'error': 'Неверный текущий пароль'}), 400
 
-    if len(new_password) < 6:
+    if len(new_password) < 8:
         return jsonify({'error': 'Пароль должен быть не менее 6 символов'}), 400
 
     if new_password != confirm_password:

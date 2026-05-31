@@ -4,11 +4,12 @@ import socket
 
 from flask import Flask
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
 from config import Config, BASE_DIR
-from extensions import db, socketio, login_manager, limiter
+from extensions import db, socketio, login_manager, limiter, csrf
 from models import User
 
 
@@ -36,12 +37,14 @@ def create_app():
     static_dir = get_resource_path('static')
 
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config.from_object(Config)
 
     db.init_app(app)
-    socketio.init_app(app, async_mode='threading', cors_allowed_origins='*', logger=False, engineio_logger=False)
+    socketio.init_app(app, async_mode='threading', cors_allowed_origins=['https://nosignal.su', 'http://localhost:8080', 'http://127.0.0.1:8080'], logger=False, engineio_logger=False)
     login_manager.init_app(app)
     limiter.init_app(app)
+    csrf.init_app(app)
 
     from auth import auth
     from chat_routes import chat
@@ -58,6 +61,14 @@ def create_app():
     with app.app_context():
         db.create_all()
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return jsonify({'error': 'Страница не найдена'}), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return jsonify({'error': 'Внутренняя ошибка сервера'}), 500
 
     return app
 

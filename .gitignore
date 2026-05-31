@@ -9,5 +9,6 @@ __pycache__/
 build/
 dist/
 *.log
+cookies*.txt
 *.spec
 cookies*.txt
