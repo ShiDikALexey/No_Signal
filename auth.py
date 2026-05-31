@@ -317,7 +317,7 @@ def change_avatar_color():
 @login_required
 def change_status():
     data = request.json or {}
-    status = data.get('status', '').strip()
+    status = re.sub(r'<[^>]*>', '', data.get('status', '').strip())
 
     if len(status) > 100:
         return jsonify({'error': 'Статус слишком длинный'}), 400

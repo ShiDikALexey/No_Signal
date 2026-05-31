@@ -15,7 +15,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'mp4', 'webm',
 ALLOWED_MIMES = {
     'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp',
     'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
-    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac',
+    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/webm',
     'application/pdf',
     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -312,6 +312,7 @@ def delete_chat(chat_id):
     Message.query.filter_by(chat_id=chat_id).delete()
     chat.members.remove(current_user)
     if len(chat.members) == 0:
+        UserChatSettings.query.filter_by(chat_id=chat_id).delete()
         db.session.delete(chat)
     db.session.commit()
     return jsonify({'success': True})

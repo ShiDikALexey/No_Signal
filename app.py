@@ -2,7 +2,7 @@ import os
 import sys
 import socket
 
-from flask import Flask
+from flask import Flask, jsonify
 from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
 
