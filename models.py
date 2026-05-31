@@ -122,7 +122,7 @@ class Chat(db.Model):
                 'prefix': prefix,
                 'text': decrypted_text[:50] + ('...' if len(decrypted_text) > 50 else ''),
                 'timestamp': m.timestamp.strftime('%H:%M'),
-                'full_timestamp': m.timestamp.isoformat()
+                'full_timestamp': m.timestamp.replace(tzinfo=timezone.utc).isoformat()
             }
 
         settings = self.get_user_settings(current_user_id)
@@ -175,7 +175,7 @@ class Message(db.Model):
             'sender_avatar_color': self.sender.avatar_color,
             'text': self.text,
             'timestamp': self.timestamp.strftime('%H:%M'),
-            'full_timestamp': self.timestamp.isoformat(),
+            'full_timestamp': self.timestamp.replace(tzinfo=timezone.utc).isoformat(),
             'file_type': self.file_type,
             'file_url': self.file_url,
             'file_name': self.file_name,
