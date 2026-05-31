@@ -27,6 +27,13 @@
         return div.innerHTML;
     }
 
+    function formatLocalTime(isoString) {
+        if (!isoString) return '';
+        var date = new Date(isoString);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
     function parseMarkdown(text) {
         if (!text) return '';
         
@@ -196,11 +203,14 @@
         document.getElementById('modal-overlay').addEventListener('click', function (e) {
             if (e.target === this) closeModal();
         });
-        document.getElementById('user-info-trigger').addEventListener('click', toggleProfileDropdown);
+        document.getElementById('user-info-trigger').addEventListener('click', function(e) {
+            e.stopPropagation();
+            openProfileDropdown();
+        });
         document.getElementById('user-info-trigger').addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                toggleProfileDropdown();
+                openProfileDropdown();
             }
         });
         document.getElementById('btn-change-nickname').addEventListener('click', showChangeNickname);
@@ -221,12 +231,12 @@
         var chatHeaderProfile = document.getElementById('chat-header-profile');
         if (chatHeaderProfile) {
             chatHeaderProfile.addEventListener('click', function () {
-                toggleProfileDropdown();
+                openProfileDropdown();
             });
             chatHeaderProfile.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    toggleProfileDropdown();
+                    openProfileDropdown();
                 }
             });
         }
@@ -399,13 +409,14 @@ var typingDebounce = null;
 
     function createChatListItem(chat) {
         var div = document.createElement('div');
-        div.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '') + (chat.is_pinned ? ' pinned' : '');
+        var hasUnread = chat.unread_count > 0;
+        div.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '') + (chat.is_pinned ? ' pinned' : '') + (hasUnread ? ' unread' : '');
         div.dataset.chatId = chat.id;
 
         var letter = chat.name.charAt(0).toUpperCase();
         var lastMsg = chat.last_message;
         var lastMsgText = lastMsg ? lastMsg.prefix + ': ' + lastMsg.text : 'Нет сообщений';
-        var lastMsgTime = lastMsg ? lastMsg.timestamp : '';
+        var lastMsgTime = lastMsg ? formatLocalTime(lastMsg.full_timestamp) : '';
 
         var badges = '';
         if (chat.is_pinned) badges += '<span class="chat-badge-icon">📌</span>';
@@ -418,6 +429,15 @@ var typingDebounce = null;
             avatarHtml = '<div class="chat-avatar" style="background-color:' + escapeHtml(chat.avatar_color) + '">' + escapeHtml(letter) + '</div>';
         }
 
+        var unreadBadge = '';
+        if (hasUnread) {
+            if (chat.unread_count) {
+                unreadBadge = '<span class="unread-badge">' + (chat.unread_count > 99 ? '99+' : chat.unread_count) + '</span>';
+            } else {
+                unreadBadge = '<span class="unread-dot"></span>';
+            }
+        }
+
         div.innerHTML =
             avatarHtml +
             '<div class="chat-info">' +
@@ -425,7 +445,8 @@ var typingDebounce = null;
             '<div class="chat-item-preview">' + escapeHtml(lastMsgText) + '</div>' +
             '</div>' +
             '<div class="chat-item-meta">' +
-            '<span class="chat-item-time">' + escapeHtml(lastMsgTime) + '</span>' +
+            '<span class="chat-item-time">' + lastMsgTime + '</span>' +
+            unreadBadge +
             (chat.is_group ? '<span class="chat-item-badge">' + chat.members_count + '</span>' : '') +
             (badges ? '<div class="chat-item-badges">' + badges + '</div>' : '') +
             '</div>';
@@ -481,8 +502,19 @@ var typingDebounce = null;
         socket.emit('join_chat', { chat_id: chatId });
         socket.emit('mark_read', { chat_id: chatId });
 
+        if (chat) {
+            chat.unread_count = 0;
+            renderChatList();
+        }
+
         document.getElementById('message-input').focus();
         hideTypingIndicator();
+    }
+
+    function getChatStatus(chat) {
+        if (chat.is_group) return chat.members_count + ' участников';
+        if (chat.other_user_id && onlineUsers.has(chat.other_user_id)) return 'В сети';
+        return 'Не в сети';
     }
 
     function updateChatHeader(chat) {
@@ -494,13 +526,15 @@ var typingDebounce = null;
         } else {
             avatarHtml = '<div class="chat-avatar small" style="background-color:' + escapeHtml(chat.avatar_color) + '">' + escapeHtml(letter) + '</div>';
         }
+        var status = getChatStatus(chat);
+        var isOnline = !chat.is_group && chat.other_user_id && onlineUsers.has(chat.other_user_id);
         info.innerHTML =
             '<div class="header-chat-info">' +
             avatarHtml +
             '<div>' +
             '<div class="header-chat-name">' + escapeHtml(chat.name) + '</div>' +
-            '<div class="header-chat-status" id="header-status">' +
-            (chat.is_group ? chat.members_count + ' участников' : 'offline') +
+            '<div class="header-chat-status' + (isOnline ? ' online' : '') + '" id="header-status">' +
+            status +
             '</div>' +
             '</div>' +
             '</div>';
@@ -574,7 +608,7 @@ var typingDebounce = null;
             div.innerHTML =
                 (msg.text ? '<div class="msg-text">' + parseMarkdown(msg.text) + '</div>' : '') +
                 fileHtml +
-                '<div class="msg-time">' + escapeHtml(msg.timestamp) + statusHtml + '</div>';
+                '<div class="msg-time">' + formatLocalTime(msg.full_timestamp) + statusHtml + '</div>';
         } else {
             div.className = 'message other' + groupedClass;
             var senderHtml = isGrouped ? '' : '<div class="msg-sender" style="color:' + escapeHtml(msg.sender_avatar_color) + '">' + escapeHtml(msg.sender_nickname) + '</div>';
@@ -582,7 +616,7 @@ var typingDebounce = null;
                 senderHtml +
                 (msg.text ? '<div class="msg-text">' + parseMarkdown(msg.text) + '</div>' : '') +
                 fileHtml +
-                '<div class="msg-time">' + escapeHtml(msg.timestamp) + '</div>';
+                '<div class="msg-time">' + formatLocalTime(msg.full_timestamp) + '</div>';
         }
 
         container.appendChild(div);
@@ -762,10 +796,20 @@ var typingDebounce = null;
 
     function onUserOnline(data) {
         onlineUsers.add(data.user_id);
+        refreshChatHeaderIfActive(data.user_id);
     }
 
     function onUserOffline(data) {
         onlineUsers.delete(data.user_id);
+        refreshChatHeaderIfActive(data.user_id);
+    }
+
+    function refreshChatHeaderIfActive(userId) {
+        if (!currentChatId) return;
+        var chat = chats.find(function(c) { return c.id === currentChatId; });
+        if (chat && chat.other_user_id === userId) {
+            updateChatHeader(chat);
+        }
     }
 
     // ========== Modal ==========
@@ -1440,18 +1484,32 @@ var typingDebounce = null;
 
     // ========== Profile Dropdown ==========
 
-    function toggleProfileDropdown() {
+    function openProfileDropdown() {
         var dropdown = document.getElementById('profile-dropdown');
         var trigger = document.getElementById('user-info-trigger');
         if (dropdown.classList.contains('hidden')) {
             renderProfileDropdown();
             dropdown.classList.remove('hidden');
             if (trigger) trigger.setAttribute('aria-expanded', 'true');
-        } else {
-            dropdown.classList.add('hidden');
-            if (trigger) trigger.setAttribute('aria-expanded', 'false');
         }
     }
+
+    function closeProfileDropdown() {
+        var dropdown = document.getElementById('profile-dropdown');
+        var trigger = document.getElementById('user-info-trigger');
+        dropdown.classList.add('hidden');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    document.addEventListener('click', function(e) {
+        var dropdown = document.getElementById('profile-dropdown');
+        var trigger = document.getElementById('user-info-trigger');
+        if (!dropdown.classList.contains('hidden')) {
+            if (!dropdown.contains(e.target) && e.target !== trigger && !trigger.contains(e.target)) {
+                closeProfileDropdown();
+            }
+        }
+    });
 
     function renderProfileDropdown() {
         var avatar = document.getElementById('dropdown-avatar');

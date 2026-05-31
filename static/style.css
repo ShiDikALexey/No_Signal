@@ -395,6 +395,41 @@ a:hover {
     margin-top: 4px;
 }
 
+.unread-badge {
+    background: var(--warning, #e67e22);
+    color: #fff;
+    font-size: 0.65em;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 9px;
+    padding: 0 5px;
+    flex-shrink: 0;
+}
+
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--warning, #e67e22);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.chat-item.unread .chat-item-name {
+    font-weight: 700;
+}
+
+.chat-item.unread .chat-item-text {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-chat-status.online {
+    color: var(--success, #2ecc71);
+}
+
 .sidebar-footer {
     display: flex;
     align-items: center;

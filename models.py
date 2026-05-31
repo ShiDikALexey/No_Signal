@@ -100,6 +100,7 @@ class Chat(db.Model):
             name = self.name or 'Групповой чат'
             avatar_color = '#3a96f9'
             avatar_photo = None
+            other_user_id = None
         else:
             other = None
             for m in self.members:
@@ -109,6 +110,7 @@ class Chat(db.Model):
             name = other.nickname if other else 'Неизвестный'
             avatar_color = other.avatar_color if other else '#888'
             avatar_photo = other.avatar_photo if other else None
+            other_user_id = other.id if other else None
 
         last_msg = None
         if self.messages:
@@ -119,10 +121,15 @@ class Chat(db.Model):
                 'sender_nickname': m.sender.nickname,
                 'prefix': prefix,
                 'text': decrypted_text[:50] + ('...' if len(decrypted_text) > 50 else ''),
-                'timestamp': m.timestamp.strftime('%H:%M')
+                'timestamp': m.timestamp.strftime('%H:%M'),
+                'full_timestamp': m.timestamp.isoformat()
             }
 
         settings = self.get_user_settings(current_user_id)
+
+        unread_count = Message.query.filter_by(
+            chat_id=self.id, is_read=False
+        ).filter(Message.sender_id != current_user_id).count()
 
         return {
             'id': self.id,
@@ -132,6 +139,8 @@ class Chat(db.Model):
             'avatar_photo': avatar_photo,
             'members_count': len(self.members),
             'last_message': last_msg,
+            'other_user_id': other_user_id,
+            'unread_count': unread_count,
             'is_pinned': settings.is_pinned,
             'is_archived': settings.is_archived,
             'is_muted': settings.is_muted
