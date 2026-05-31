@@ -29,7 +29,7 @@
   <img src="https://img.shields.io/badge/Let%27s%20Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white" alt="Let's Encrypt">
 </p>
 
-> **v0.5.0** — Почтовый клиент, Android APK, аудит безопасности, улучшенная безопасность и UX.
+> **v0.4.1** — Аудит безопасности, Android APK, PWA, улучшенная безопасность и UX.
 
 ---
 
@@ -234,8 +234,14 @@ No_Signal следует принципам доступности:
 
 ## Changelog
 
-### v0.5.0 (текущий)
-- ✅ **Безопасность**: Убран hardcoded admin email
+### v0.4.1 (текущий)
+- ✅ **Безопасность**: Полный аудит и исправление 18 уязвимостей — XSS, open redirect, CSRF, CSWSH, cookie security, file upload MIME check, markdown injection, lightbox XSS
+- ✅ **Инфраструктура**: ProxyFix middleware для корректной работы за Nginx
+- ✅ **Инфраструктура**: Custom error handlers (404/500) без утечки информации
+- ✅ **Android**: APK-сборка (Capacitor), PWA manifest и service worker
+- ✅ **UX**: Скриншоты в README, анимированный логотип в сайдбаре
+
+### v0.4.0
 - ✅ **Безопасность**: SECRET_KEY теперь генерируется автоматически или берётся из .env
 - ✅ **Безопасность**: Добавлен Flask-Limiter для rate limiting на критические endpoints
 - ✅ **Безопасность**: Сброс пароля теперь требует email verification с токеном
@@ -244,10 +250,12 @@ No_Signal следует принципам доступности:
 - ✅ **Email**: Повторная отправка письма подтверждения (/auth/resend-verification)
 - ✅ **Email**: Неподтверждённые пользователи не могут войти
 - ✅ **Email**: Gmail SMTP интеграция для отправки писем
+- ✅ **Email**: HTML-письма с кардиограммой логотипа (PNG), светлая тема
 - ✅ **Архитектура**: Per-user настройки чатов (pin, archive, mute) через UserChatSettings
 - ✅ **Производительность**: Пагинация сообщений с cursor-based загрузкой
 - ✅ **Производительность**: Оптимизирован запрос списка чатов
 - ✅ **Производительность**: Добавлены индексы БД для Message, User, UserChatSettings
+- ✅ **Производительность**: PostgreSQL — пул соединений (pool_size=5), таймаут SMTP (10с)
 - ✅ **UX**: Toast notifications вместо alert()
 - ✅ **UX**: Custom confirm dialogs вместо confirm()
 - ✅ **UX**: Skeleton loaders при загрузке чатов и сообщений
@@ -255,20 +263,7 @@ No_Signal следует принципам доступности:
 - ✅ **Accessibility**: ARIA атрибуты для всех интерактивных элементов
 - ✅ **Accessibility**: Keyboard navigation (Enter/Space для кнопок)
 - ✅ **Code quality**: Исправлен deprecated datetime.utcnow() на timezone-aware datetime.now(timezone.utc)
-- ✅ **Code quality**: PostgreSQL — пул соединений (pool_size=5), таймаут SMTP (10с)
 - ✅ **Миграция**: Создан скрипт migrate.py для переноса данных в новую схему
-- ✅ **Email**: HTML-письма с кардиограммой логотипа (PNG), светлая тема
-- ✅ **Безопасность**: Полный аудит и исправление 18 уязвимостей — XSS, open redirect, CSRF, CSWSH, cookie security, file upload MIME check, markdown injection, lightbox XSS
-- ✅ **Безопасность**: Добавлена CSRF-защита через Flask-WTF на все формы и API
-- ✅ **Безопасность**: Валидация email-формата, мин. длина пароля 8 символов, макс. длина ника 24 символа
-- ✅ **Безопасность**: Защита от `javascript:`/`data:` URL injection в markdown
-- ✅ **Безопасность**: UUID имён файлов увеличен с 8 до 32 символов
-- ✅ **Безопасность**: MIME-type валидация загружаемых файлов
-- ✅ **Безопасность**: Удалены опасные расширения (html, js, svg, exe, sh, bat) из списка разрешённых
-- ✅ **Инфраструктура**: ProxyFix middleware для корректной работы за Nginx
-- ✅ **Инфраструктура**: Custom error handlers (404/500) без утечки информации
-- ✅ **Android**: Добавлены APK-файлы сборки (Capacitor), PWA manifest и service worker
-- ✅ **UX**: Скриншоты в README, анимированный логотип в сайдбаре
 
 ### v0.3.0
 - ✅ Drag & drop файлов — перетащите файл в окно для отправки
