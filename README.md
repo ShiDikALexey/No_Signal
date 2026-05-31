@@ -236,13 +236,6 @@ No_Signal следует принципам доступности:
 
 ### v0.4.1 (текущий)
 - ✅ **Безопасность**: Полный аудит и исправление 18 уязвимостей — XSS, open redirect, CSRF, CSWSH, cookie security, file upload MIME check, markdown injection, lightbox XSS
-- ✅ **Безопасность**: Добавлена CSRF-защита через Flask-WTF на все формы и API
-- ✅ **Безопасность**: Валидация email-формата, мин. длина пароля 8 символов, макс. длина ника 24 символа
-- ✅ **Безопасность**: Защита от `javascript:`/`data:` URL injection в markdown
-- ✅ **Безопасность**: UUID имён файлов увеличен с 8 до 32 символов
-- ✅ **Безопасность**: MIME-type валидация загружаемых файлов
-- ✅ **Безопасность**: Удалены опасные расширения (html, js, svg, exe, sh, bat) из списка разрешённых
-- ✅ **Безопасность**: Убран hardcoded admin email (jrfert@gmail.com) из ветки bugfix
 - ✅ **Инфраструктура**: ProxyFix middleware для корректной работы за Nginx
 - ✅ **Инфраструктура**: Custom error handlers (404/500) без утечки информации
 - ✅ **Android**: APK-сборка (Capacitor), PWA manifest и service worker
