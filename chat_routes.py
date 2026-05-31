@@ -1,17 +1,30 @@
 from flask import Blueprint, render_template, jsonify, request, send_from_directory, current_app
 from flask_login import login_required, current_user
-from models import User, Chat, Message, chat_members
+from models import User, Chat, Message, chat_members, UserChatSettings
 from extensions import db, socketio
 from datetime import datetime, timezone
 from werkzeug.utils import secure_filename
 from crypto import decrypt
-from sqlalchemy import func
 import os
 import uuid
 
 chat = Blueprint('chat', __name__)
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'zip', 'rar', '7z', 'tar', 'gz', 'json', 'xml', 'csv', 'py', 'js', 'html', 'css', 'sql'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'zip', 'rar', '7z', 'tar', 'gz', 'json', 'xml', 'csv'}
+
+ALLOWED_MIMES = {
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp',
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac',
+    'application/pdf',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain', 'application/rtf',
+    'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
+    'application/x-tar', 'application/gzip',
+    'application/json', 'application/xml', 'text/csv',
+}
 
 
 def allowed_file(filename):
@@ -20,7 +33,7 @@ def allowed_file(filename):
 
 def get_file_type(filename):
     ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-    image_exts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'}
+    image_exts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
     video_exts = {'mp4', 'webm', 'mov', 'avi', 'mkv'}
     audio_exts = {'mp3', 'wav', 'ogg', 'flac'}
     doc_exts = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv', 'json', 'xml'}
@@ -64,26 +77,27 @@ def get_chats():
         Chat.members.any(User.id == current_user.id)
     ).all()
 
-    chat_ids = [c.id for c in user_chats]
-
-    last_msg_query = db.session.query(
-        Message.chat_id,
-        func.max(Message.timestamp).label('max_ts')
-    ).filter(
-        Message.chat_id.in_(chat_ids)
-    ).group_by(Message.chat_id).all()
-    last_msg_map = {row.chat_id: row.max_ts for row in last_msg_query}
-
     chats_with_messages = []
     for c in user_chats:
-        latest_ts = last_msg_map.get(c.id)
-        if latest_ts:
-            chats_with_messages.append((c, latest_ts))
+        last_msg = Message.query.filter_by(chat_id=c.id).order_by(Message.timestamp.desc()).first()
+        if last_msg:
+            chats_with_messages.append((c, last_msg.timestamp))
         else:
             chats_with_messages.append((c, c.created_at))
 
     chats_with_messages.sort(key=lambda x: x[1], reverse=True)
-    result = [c.to_dict(current_user.id) for c, _ in chats_with_messages]
+    
+    pinned = []
+    unpinned = []
+    for c, _ in chats_with_messages:
+        settings = c.get_user_settings(current_user.id)
+        if settings.is_pinned and not settings.is_archived:
+            pinned.append(c)
+        else:
+            unpinned.append(c)
+    
+    sorted_chats = pinned + unpinned
+    result = [c.to_dict(current_user.id) for c in sorted_chats]
     return jsonify(result)
 
 
@@ -149,9 +163,17 @@ def get_messages(chat_id):
     if current_user not in chat.members:
         return jsonify({'error': 'Нет доступа'}), 403
 
-    messages = Message.query.filter_by(chat_id=chat_id).order_by(
-        Message.timestamp.asc()
-    ).limit(200).all()
+    before_id = request.args.get('before', type=int)
+    limit = request.args.get('limit', 50, type=int)
+    limit = min(limit, 100)
+
+    query = Message.query.filter_by(chat_id=chat_id)
+    
+    if before_id:
+        query = query.filter(Message.id < before_id)
+    
+    messages = query.order_by(Message.timestamp.desc()).limit(limit).all()
+    messages.reverse()
 
     result = []
     for m in messages:
@@ -159,7 +181,13 @@ def get_messages(chat_id):
         msg_dict['text'] = decrypt(m.text)
         result.append(msg_dict)
 
-    return jsonify(result)
+    has_more = len(messages) == limit
+    
+    return jsonify({
+        'messages': result,
+        'has_more': has_more,
+        'oldest_id': messages[0].id if messages else None
+    })
 
 
 @chat.route('/api/upload', methods=['POST'])
@@ -175,11 +203,14 @@ def upload_file():
     if not allowed_file(file.filename):
         return jsonify({'error': 'Недопустимый тип файла'}), 400
 
+    if file.content_type and file.content_type not in ALLOWED_MIMES:
+        return jsonify({'error': 'Недопустимый формат файла'}), 400
+
     upload_folder = current_app.config['UPLOAD_FOLDER']
     os.makedirs(upload_folder, exist_ok=True)
 
     original_name = secure_filename(file.filename) or 'file'
-    unique_name = str(uuid.uuid4())[:8] + '_' + original_name
+    unique_name = uuid.uuid4().hex + '_' + original_name
     file_path = os.path.join(upload_folder, unique_name)
     file.save(file_path)
 
@@ -199,6 +230,24 @@ def upload_file():
 @login_required
 def serve_upload(filename):
     upload_folder = current_app.config['UPLOAD_FOLDER']
+    file_path = os.path.join(upload_folder, filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'Файл не найден'}), 404
+    
+    user_chats = Chat.query.filter(Chat.members.any(User.id == current_user.id)).all()
+    user_chat_ids = [c.id for c in user_chats]
+    
+    message = Message.query.filter(
+        Message.chat_id.in_(user_chat_ids),
+        Message.file_url == '/uploads/' + filename
+    ).first()
+    
+    if not message:
+        avatar_user = User.query.filter_by(avatar_photo='/uploads/' + filename).first()
+        if not avatar_user or avatar_user.id != current_user.id:
+            return jsonify({'error': 'Нет доступа к файлу'}), 403
+    
     return send_from_directory(upload_folder, filename)
 
 
@@ -208,9 +257,11 @@ def toggle_pin_chat(chat_id):
     chat = Chat.query.get_or_404(chat_id)
     if current_user not in chat.members:
         return jsonify({'error': 'Нет доступа'}), 403
-    chat.is_pinned = not chat.is_pinned
+    
+    settings = chat.get_user_settings(current_user.id)
+    settings.is_pinned = not settings.is_pinned
     db.session.commit()
-    return jsonify({'is_pinned': chat.is_pinned})
+    return jsonify({'is_pinned': settings.is_pinned})
 
 
 @chat.route('/api/chats/<int:chat_id>/archive', methods=['POST'])
@@ -219,11 +270,13 @@ def toggle_archive_chat(chat_id):
     chat = Chat.query.get_or_404(chat_id)
     if current_user not in chat.members:
         return jsonify({'error': 'Нет доступа'}), 403
-    chat.is_archived = not chat.is_archived
-    if chat.is_archived:
-        chat.is_pinned = False
+    
+    settings = chat.get_user_settings(current_user.id)
+    settings.is_archived = not settings.is_archived
+    if settings.is_archived:
+        settings.is_pinned = False
     db.session.commit()
-    return jsonify({'is_archived': chat.is_archived, 'is_pinned': chat.is_pinned})
+    return jsonify({'is_archived': settings.is_archived, 'is_pinned': settings.is_pinned})
 
 
 @chat.route('/api/chats/<int:chat_id>/mute', methods=['POST'])
@@ -232,9 +285,11 @@ def toggle_mute_chat(chat_id):
     chat = Chat.query.get_or_404(chat_id)
     if current_user not in chat.members:
         return jsonify({'error': 'Нет доступа'}), 403
-    chat.is_muted = not chat.is_muted
+    
+    settings = chat.get_user_settings(current_user.id)
+    settings.is_muted = not settings.is_muted
     db.session.commit()
-    return jsonify({'is_muted': chat.is_muted})
+    return jsonify({'is_muted': settings.is_muted})
 
 
 @chat.route('/api/chats/<int:chat_id>/clear', methods=['POST'])

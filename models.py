@@ -24,7 +24,32 @@ chat_members = db.Table(
 )
 
 
+class UserChatSettings(db.Model):
+    __tablename__ = 'user_chat_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
+    is_pinned = db.Column(db.Boolean, default=False, nullable=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    is_muted = db.Column(db.Boolean, default=False, nullable=False)
+    
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'chat_id', name='uq_user_chat'),
+        db.Index('idx_user_chat_settings_user', 'user_id'),
+        db.Index('idx_user_chat_settings_chat', 'chat_id'),
+    )
+    
+    user = db.relationship('User', backref='chat_settings')
+    chat = db.relationship('Chat', backref='user_settings')
+
+
 class User(UserMixin, db.Model):
+    __table_args__ = (
+        db.Index('idx_user_email', 'email'),
+        db.Index('idx_user_nickname', 'nickname'),
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     nickname = db.Column(db.String(50), unique=True, nullable=False)
@@ -33,13 +58,15 @@ class User(UserMixin, db.Model):
     avatar_photo = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(100), nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
     last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    reset_token = db.Column(db.String(100), nullable=True)
+    reset_token_expires = db.Column(db.DateTime, nullable=True)
+    verify_token = db.Column(db.String(100), nullable=True)
+    verify_token_expires = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
-        last_seen = self.last_seen
-        if last_seen and last_seen.tzinfo is None:
-            last_seen = last_seen.replace(tzinfo=timezone.utc)
-        is_online = last_seen and (datetime.now(timezone.utc) - last_seen).total_seconds() < 180
+        is_online = (datetime.now(timezone.utc) - self.last_seen.replace(tzinfo=timezone.utc)).total_seconds() < 180
         return {
             'id': self.id,
             'nickname': self.nickname,
@@ -55,13 +82,18 @@ class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=True)
     is_group = db.Column(db.Boolean, default=False, nullable=False)
-    is_pinned = db.Column(db.Boolean, default=False, nullable=False)
-    is_archived = db.Column(db.Boolean, default=False, nullable=False)
-    is_muted = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     members = db.relationship('User', secondary=chat_members, backref='chats')
     messages = db.relationship('Message', backref='chat_msg', order_by='Message.timestamp')
+
+    def get_user_settings(self, user_id):
+        settings = UserChatSettings.query.filter_by(user_id=user_id, chat_id=self.id).first()
+        if not settings:
+            settings = UserChatSettings(user_id=user_id, chat_id=self.id)
+            db.session.add(settings)
+            db.session.commit()
+        return settings
 
     def to_dict(self, current_user_id):
         if self.is_group:
@@ -77,7 +109,6 @@ class Chat(db.Model):
             name = other.nickname if other else 'Неизвестный'
             avatar_color = other.avatar_color if other else '#888'
             avatar_photo = other.avatar_photo if other else None
-            is_online = other.to_dict()['is_online'] if other else False
 
         last_msg = None
         if self.messages:
@@ -88,8 +119,10 @@ class Chat(db.Model):
                 'sender_nickname': m.sender.nickname,
                 'prefix': prefix,
                 'text': decrypted_text[:50] + ('...' if len(decrypted_text) > 50 else ''),
-                'timestamp': m.timestamp.isoformat()
+                'timestamp': m.timestamp.strftime('%H:%M')
             }
+
+        settings = self.get_user_settings(current_user_id)
 
         return {
             'id': self.id,
@@ -99,14 +132,18 @@ class Chat(db.Model):
             'avatar_photo': avatar_photo,
             'members_count': len(self.members),
             'last_message': last_msg,
-            'is_pinned': self.is_pinned,
-            'is_archived': self.is_archived,
-            'is_muted': self.is_muted,
-            'is_online': is_online if not self.is_group else None
+            'is_pinned': settings.is_pinned,
+            'is_archived': settings.is_archived,
+            'is_muted': settings.is_muted
         }
 
 
 class Message(db.Model):
+    __table_args__ = (
+        db.Index('idx_message_chat_timestamp', 'chat_id', 'timestamp'),
+        db.Index('idx_message_sender', 'sender_id'),
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -128,7 +165,7 @@ class Message(db.Model):
             'sender_nickname': self.sender.nickname,
             'sender_avatar_color': self.sender.avatar_color,
             'text': self.text,
-            'timestamp': self.timestamp.isoformat(),
+            'timestamp': self.timestamp.strftime('%H:%M'),
             'full_timestamp': self.timestamp.isoformat(),
             'file_type': self.file_type,
             'file_url': self.file_url,

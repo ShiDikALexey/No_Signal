@@ -1,37 +1,37 @@
 {% extends "base.html" %}
 {% block title %}No_Signal{% endblock %}
 {% block content %}
-<div class="app-container">
-    <aside class="sidebar" id="sidebar">
+<div class="app-container" role="application" aria-label="Мессенджер No_Signal">
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Список чатов">
         <div class="sidebar-header">
             <div class="logo">
-                <img src="/static/logo.svg?v=5" alt="" class="logo-icon">
+                <img src="/static/favicon.svg?v=4" alt="" class="logo-icon">
                 <span>No_Signal</span>
             </div>
             <div class="sidebar-actions">
-                <button class="icon-btn" id="new-chat-btn" title="Новый чат">+</button>
+                <button class="icon-btn" id="new-chat-btn" title="Новый чат" aria-label="Создать новый чат">+</button>
             </div>
         </div>
         <div class="sidebar-search">
-            <input type="text" id="search-input" placeholder="Поиск чатов..." autocomplete="off">
+            <input type="text" id="search-input" placeholder="Поиск чатов..." autocomplete="off" aria-label="Поиск чатов">
         </div>
         <div class="archive-btn-wrapper" id="archive-btn-wrapper">
-            <button class="archive-btn" id="archive-btn">
+            <button class="archive-btn" id="archive-btn" aria-label="Открыть архив">
                 <span class="archive-btn-icon">📥</span>
                 <span>Архив</span>
                 <span class="archive-btn-count hidden" id="archive-count"></span>
             </button>
         </div>
-        <div class="chat-list" id="chat-list">
+        <div class="chat-list" id="chat-list" role="list" aria-label="Чаты">
             <div class="chat-list-empty" id="chat-list-empty">Нет чатов. Нажмите + чтобы начать</div>
         </div>
         <div class="sidebar-footer">
-            <div class="user-info" id="user-info-trigger">
+            <div class="user-info" id="user-info-trigger" role="button" tabindex="0" aria-label="Профиль пользователя" aria-expanded="false">
                 <div class="chat-avatar small" id="my-avatar"></div>
                 <span class="user-nickname" id="my-nickname"></span>
             </div>
         </div>
-        <div class="profile-dropdown hidden" id="profile-dropdown">
+        <div class="profile-dropdown hidden" id="profile-dropdown" role="menu" aria-label="Меню профиля">
             <div class="profile-dropdown-header">
                 <div class="chat-avatar" id="dropdown-avatar"></div>
                 <div class="profile-dropdown-info">
@@ -40,48 +40,48 @@
                 </div>
             </div>
             <div class="profile-dropdown-divider"></div>
-            <button class="profile-dropdown-item" id="btn-change-nickname">
+            <button class="profile-dropdown-item" id="btn-change-nickname" role="menuitem">
                 <span class="profile-dropdown-icon">✏️</span>
                 <span>Сменить никнейм</span>
             </button>
-            <button class="profile-dropdown-item" id="btn-account-settings">
+            <button class="profile-dropdown-item" id="btn-account-settings" role="menuitem">
                 <span class="profile-dropdown-icon">⚙️</span>
                 <span>Данные аккаунта</span>
             </button>
             <div class="profile-dropdown-divider"></div>
-            <a href="/auth/logout" class="profile-dropdown-item profile-dropdown-logout">
+            <a href="/auth/logout" class="profile-dropdown-item profile-dropdown-logout" role="menuitem">
                 <span class="profile-dropdown-icon">🚪</span>
                 <span>Выйти</span>
             </a>
         </div>
     </aside>
 
-    <div class="chat-area" id="chat-area">
+    <div class="chat-area" id="chat-area" role="main" aria-label="Область чата">
         <div class="chat-header" id="chat-header">
-            <button class="back-btn" id="back-btn">&#8592;</button>
+            <button class="back-btn" id="back-btn" aria-label="Назад к списку чатов">&#8592;</button>
             <div id="chat-header-info"></div>
-            <div class="chat-header-profile" id="chat-header-profile" title="Профиль">
+            <div class="chat-header-profile" id="chat-header-profile" title="Профиль" role="button" tabindex="0" aria-label="Открыть профиль">
                 <div class="chat-avatar small" id="chat-header-my-avatar"></div>
             </div>
         </div>
 
-        <div class="messages" id="messages"></div>
+        <div class="messages" id="messages" role="log" aria-label="Сообщения" aria-live="polite"></div>
 
-        <div class="typing-indicator hidden" id="typing-indicator"></div>
+        <div class="typing-indicator hidden" id="typing-indicator" aria-live="polite"></div>
 
-        <div class="system-banner hidden" id="system-banner">
+        <div class="system-banner hidden" id="system-banner" role="alert">
             <span class="system-banner-icon">⚠️</span>
             <span class="system-banner-text" id="system-banner-text"></span>
-            <button class="system-banner-close" id="system-banner-close">&times;</button>
+            <button class="system-banner-close" id="system-banner-close" aria-label="Закрыть оповещение">&times;</button>
         </div>
 
         <div class="input-area">
-            <button class="attach-btn" id="attach-btn" title="Прикрепить файл">📎</button>
-            <button class="emoji-btn" id="emoji-btn" title="Эмодзи">😊</button>
+            <button class="attach-btn" id="attach-btn" title="Прикрепить файл" aria-label="Прикрепить файл">📎</button>
+            <button class="emoji-btn" id="emoji-btn" title="Эмодзи" aria-label="Открыть панель эмодзи">😊</button>
             <input type="file" id="file-input" hidden>
-            <input type="text" id="message-input" name="message-text" placeholder="Введите сообщение..." autocomplete="nope" maxlength="2000">
-            <button class="voice-btn" id="voice-btn" title="Голосовое сообщение">🎤</button>
-            <button id="send-btn" title="Отправить">➤</button>
+            <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off" maxlength="2000" aria-label="Поле ввода сообщения">
+            <button class="voice-btn" id="voice-btn" title="Голосовое сообщение" aria-label="Записать голосовое сообщение">🎤</button>
+            <button id="send-btn" title="Отправить" aria-label="Отправить сообщение">➤</button>
             <div class="voice-recording-overlay hidden" id="voice-recording-overlay">
                 <div class="voice-recording-content">
                     <div class="voice-recording-indicator">
@@ -89,12 +89,12 @@
                         <span class="recording-time" id="recording-time">00:00</span>
                     </div>
                     <div class="voice-waveform" id="voice-waveform"></div>
-                    <button class="voice-recording-cancel-btn" type="button" id="voice-recording-cancel">Отмена</button>
+                    <button class="voice-recording-cancel-btn" type="button" id="voice-recording-cancel" aria-label="Отменить запись">Отмена</button>
                 </div>
             </div>
         </div>
         <div class="file-preview hidden" id="file-preview"></div>
-        <div class="emoji-picker hidden" id="emoji-picker"></div>
+        <div class="emoji-picker hidden" id="emoji-picker" role="dialog" aria-label="Панель эмодзи"></div>
     </div>
 
     <div class="no-chat-selected" id="no-chat-selected">
@@ -106,11 +106,11 @@
     </div>
 </div>
 
-<div class="modal-overlay hidden" id="modal-overlay">
+<div class="modal-overlay hidden" id="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal" id="modal">
         <div class="modal-header">
             <h2 id="modal-title">Новый чат</h2>
-            <button class="modal-close" id="modal-close">&times;</button>
+            <button class="modal-close" id="modal-close" aria-label="Закрыть модальное окно">&times;</button>
         </div>
         <div id="modal-content"></div>
     </div>
@@ -120,14 +120,14 @@
 {% block scripts %}
 <script src="/static/socket.io.min.js"></script>
 <script>
-window.CURRENT_USER = {{ {
-    'id': current_user.id,
-    'nickname': current_user.nickname,
-    'avatarColor': current_user.avatar_color,
-    'avatarPhoto': current_user.avatar_photo or '',
-    'status': current_user.status or '',
-    'isAdmin': current_user.is_admin
-} | tojson | safe }};
+window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nickname: "{{ current_user.nickname }}",
+    avatarColor: "{{ current_user.avatar_color }}",
+    avatarPhoto: "{{ current_user.avatar_photo or '' }}",
+    status: "{{ current_user.status or '' }}",
+    isAdmin: {{ 'true' if current_user.is_admin else 'false' }}
+};
 </script>
-<script src="/static/main.js?v=5"></script>
+<script src="/static/main.js"></script>
 {% endblock %}

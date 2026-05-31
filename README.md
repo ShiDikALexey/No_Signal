@@ -29,7 +29,20 @@
   <img src="https://img.shields.io/badge/Let%27s%20Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white" alt="Let's Encrypt">
 </p>
 
-> **⚠️ Тестовый релиз** — Функционал может содержать ошибки и будет дорабатываться.
+> **v0.4.0** — Почтовый клиент, улучшенная безопасность и UX.
+
+---
+
+## 📸 Скриншоты
+
+<p align="center">
+  <img src="screenshots/login.png" width="45%" alt="Login">
+  <img src="screenshots/chat-mobile.png" width="22%" alt="Mobile">
+</p>
+
+<p align="center">
+  <img src="screenshots/chat.png" width="70%" alt="Chat">
+</p>
 
 ---
 
@@ -40,12 +53,14 @@
 | | |
 |---|---|
 | **Real-time WebSocket** | Мгновенная доставка через Flask-SocketIO |
-| **Шифрование сообщений** | Все сообщения шифруются перед сохранением в БД |
+| **Шифрование сообщений** | Все сообщения шифруются Fernet перед сохранением в БД |
 | **Read receipts (✓✓)** | Серые — доставлено, синие — прочитано, авто-обновление |
 | **Typing indicators** | Анимированные точки, debounce 2с, отключается при отправке |
-| **Date separators** | "Сегодня", "Вчера", полная дата для старых сообщений |
+| **Date separators** | "Сегодня", "Вчера", полной дата для старых сообщений |
 | **Message grouping** | Сообщения от одного отправителя группируются |
 | **Auto-scroll** | Прокрутка к последнему сообщению при новых |
+| **Cursor-based пагинация** | Загрузка по 50 сообщений, оптимизация производительности |
+| **Markdown** | **bold**, *italic*, `code`, ~~strikethrough~~, [links](url) |
 
 ### 📎 Файлы
 
@@ -77,9 +92,9 @@
 | **Личные (1-on-1)** | Создание через поиск пользователей |
 | **Групповые** | С выбором участников и именем |
 | **Chip-селектор** | Выбранные участники отображаются с возможностью удаления |
-| **Pin** | Закрепление чата вверху списка |
-| **Archive** | Архивация с отдельной вкладкой и счётчиком |
-| **Mute** | Отключение уведомлений, 🔕 бейдж |
+| **Pin** | Закрепление чата вверху списка (per-user) |
+| **Archive** | Архивация с отдельной вкладкой и счётчиком (per-user) |
+| **Mute** | Отключение уведомлений, 🔕 бейдж (per-user) |
 | **Контекстное меню** | ПКМ или долгое нажатие на мобильных |
 | **Поиск по чатам** | Фильтрация списка по названию |
 | **Очистка истории** | Удаление всех сообщений в чате |
@@ -105,19 +120,23 @@
 
 | | |
 |---|---|
-| **Регистрация / Логин** | Email + пароль, client-side валидация совпадения паролей |
-| **Сброс пароля** | Самостоятельный — ввод email + новый пароль |
+| **Регистрация / Логин** | Email + пароль, email-верификация при регистрации |
+| **Email-верификация** | Письмо с подтверждением, ссылка 24 часа, повторная отправка |
+| **Сброс пароля** | Email verification с токеном (1 час валидность) |
 | **Смена никнейма** | 2-30 символов, проверка уникальности |
 | **Смена статуса** | До 100 символов |
 | **Аватар** | Загрузка фото (png/jpg/gif/webp), удаление, 15 цветов на выбор |
 | **Смена пароля** | С подтверждением старого пароля |
 | **Удаление аккаунта** | Каскадное удаление всех чатов и сообщений |
 
-### 🛡 Безопасность
+### 🔐 Безопасность
 
 | | |
 |---|---|
-| **Шифрование сообщений** | Сообщения шифруются перед сохранением в БД |
+| **Шифрование сообщений** | Все сообщения шифруются Fernet перед сохранением в БД |
+| **Rate limiting** | Защита от brute-force: login (10/min), register (5/hour), reset (3/hour) |
+| **Email verification** | Сброс пароля требует подтверждения через email с токеном (1 час) |
+| **File access control** | Проверка прав доступа к загруженным файлам |
 | **CSRF защита** | `credentials: 'same-origin'` на всех API-запросах |
 | **Flask-Login** | Сессии с remember-me |
 | **UUID filenames** | Предотвращение path traversal и перезаписи |
@@ -138,6 +157,10 @@
 | **Chat header profile** | Кнопка профиля на мобильных |
 | **No-chat placeholder** | Логотип и подсказка когда чат не выбран |
 | **Кастомный scrollbar** | Тонкий, тёмный, под темы |
+| **Toast notifications** | Современные уведомления вместо alert() |
+| **Custom confirm dialogs** | Красивые диалоги подтверждения вместо confirm() |
+| **Skeleton loaders** | Анимированные заглушки при загрузке контента |
+| **Markdown поддержка** | **bold**, *italic*, `code`, ~~strikethrough~~, [links](url) |
 
 ### 🛠 Админ-панель
 
@@ -167,6 +190,8 @@
 | **Nginx** | Проксирование WebSocket, статика, SSL termination |
 | **PostgreSQL / SQLite** | PostgreSQL в production, SQLite для разработки |
 | **Let's Encrypt** | Автоматическое обновление SSL сертификатов |
+| **Flask-Limiter** | Rate limiting для защиты от abuse |
+| **Database indexes** | Оптимизация запросов для Message, User, UserChatSettings |
 
 ---
 
@@ -192,7 +217,7 @@
 ┌─────────────────────────────────────────────────────────┐
 │              Flask + Flask-SocketIO (Gunicorn)            │
 │                                                          │
-│  app.py · auth.py · chat_routes.py · socket_handlers.py  │
+│  app.py · auth.py · chat_routes.py · socket_handlers.py · mail.py│
 └──────┬──────────────────────────────────────┬───────────┘
        │                                      │
        ▼                                      ▼
@@ -231,6 +256,10 @@ source venv/bin/activate  # Linux/Mac
 # Зависимости
 pip install -r requirements.txt
 
+# Настройка окружения (опционально)
+cp .env.example .env
+# Отредактируйте .env и установите SECRET_KEY для production
+
 # Запуск
 python app.py
 ```
@@ -238,6 +267,26 @@ python app.py
 Открой `http://localhost:8080` и зарегистрируйся.
 
 > По умолчанию используется SQLite. Для PostgreSQL установи `DATABASE_URL` в `.env`.
+>
+> **Важно**: В production обязательно установите `SECRET_KEY` в `.env` файле!
+
+### Настройка Email
+
+No_Signal использует Gmail SMTP для отправки писем. Добавьте в `.env`:
+
+```env
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=your@gmail.com
+```
+
+Для пароля приложения: включите 2FA → https://myaccount.google.com/apppasswords
+
+```bash
+python test_mail.py your@email.com
+```
 
 ---
 
@@ -333,7 +382,7 @@ server {
 | Метод | Путь | Описание |
 |-------|------|----------|
 | `GET` | `/api/chats` | Список чатов |
-| `GET` | `/api/chats/<id>/messages` | Сообщения чата |
+| `GET` | `/api/chats/<id>/messages?limit=50&before=<id>` | Сообщения чата (cursor-based пагинация) |
 | `POST` | `/api/chats/private/<user_id>` | Создать личный чат |
 | `POST` | `/api/chats/group` | Создать групповой чат |
 | `POST` | `/api/upload` | Загрузить файл |
@@ -354,31 +403,63 @@ pip install pytest
 pytest tests/ -v
 ```
 
-Текущий охват: 42 теста (авторизация, профиль, чаты, файлы, WebSocket, админ-панель, криптография).
+Текущий охват: 52 теста (авторизация, профиль, чаты, файлы, WebSocket, админ-панель, криптография, per-user settings, пагинация, rate limiting, email verification).
+
+### Миграция с v0.3.x
+
+При обновлении с предыдущей версии запустите миграцию:
+
+```bash
+python migrate.py
+```
+
+Скрипт автоматически:
+- Добавит колонки `reset_token` и `reset_token_expires` в таблицу `user`
+- Создаст таблицу `user_chat_settings` для per-user настроек чатов
+- Мигрирует существующие настройки pin/archive/mute из глобальных в per-user
+
+---
+
+## Accessibility
+
+No_Signal следует принципам доступности:
+
+- **ARIA атрибуты**: Все интерактивные элементы имеют соответствующие ARIA labels
+- **Keyboard navigation**: Полная навигация с клавиатуры (Tab, Enter, Space, Escape)
+- **Screen reader support**: Семантическая разметка для программ чтения с экрана
+- **Focus management**: Корректное управление фокусом в модальных окнах
+- **High contrast**: Достаточный контраст текста для readability
 
 ---
 
 ## Changelog
 
-### v0.3.1 (текущий)
-- ✅ **Безопасность**: Убраны опасные расширения файлов (.exe, .apk, .bat, .sh, .dmg, .iso)
-- ✅ **Безопасность**: XSS-защита CURRENT_USER через tojson фильтр Jinja2
-- ✅ **Бэкенд**: datetime.utcnow() заменён на datetime.now(timezone.utc) во всём проекте
-- ✅ **Бэкенд**: Ленивая инициализация Fernet (crypto.py) — ключ не создаётся при импорте
-- ✅ **Производительность**: get_chats() — устранён N+1 запрос, заменён на GROUP BY агрегацию
-- ✅ **Фронтенд**: MediaRecorder фолбек для Safari (audio/webm → audio/mp4)
-- ✅ **Фронтенд**: Поиск эмодзи теперь реально фильтрует по ключевым словам
-- ✅ **CSS**: Исправлен битый var(--text) на var(--text-primary)
-- ✅ **CSS**: Удалены дубликаты правил .wave-bar и .voice-recording-hint
-- ✅ **CSS**: Добавлен system-ui шрифт, Firefox scrollbar, prefers-reduced-motion
-- ✅ **CSS**: SVG-паттерн кардиограммы как фоновое изображение для auth-страниц и no-chat
-- ✅ **CSS**: Улучшена позиция emoji-picker и profile-dropdown на мобильных
-- ✅ **Мета**: Кеш-бастинг обновлён до v=5, добавлен meta color-scheme: dark
-- ✅ **Тесты**: 42 теста проходят
+### v0.4.0 (текущий)
+- ✅ **Безопасность**: Убран hardcoded admin email
+- ✅ **Безопасность**: SECRET_KEY теперь генерируется автоматически или берётся из .env
+- ✅ **Безопасность**: Добавлен Flask-Limiter для rate limiting на критические endpoints
+- ✅ **Безопасность**: Сброс пароля теперь требует email verification с токеном
+- ✅ **Безопасность**: Добавлена проверка доступа к загруженным файлам
+- ✅ **Email**: Email-верификация при регистрации (HTML-письмо с подтверждением, 24 часа)
+- ✅ **Email**: Повторная отправка письма подтверждения (/auth/resend-verification)
+- ✅ **Email**: Неподтверждённые пользователи не могут войти
+- ✅ **Email**: Gmail SMTP интеграция для отправки писем
+- ✅ **Архитектура**: Per-user настройки чатов (pin, archive, mute) через UserChatSettings
+- ✅ **Производительность**: Пагинация сообщений с cursor-based загрузкой
+- ✅ **Производительность**: Оптимизирован запрос списка чатов
+- ✅ **Производительность**: Добавлены индексы БД для Message, User, UserChatSettings
+- ✅ **UX**: Toast notifications вместо alert()
+- ✅ **UX**: Custom confirm dialogs вместо confirm()
+- ✅ **UX**: Skeleton loaders при загрузке чатов и сообщений
+- ✅ **UX**: Markdown поддержка в сообщениях (bold, italic, code, links, strikethrough)
+- ✅ **Accessibility**: ARIA атрибуты для всех интерактивных элементов
+- ✅ **Accessibility**: Keyboard navigation (Enter/Space для кнопок)
+- ✅ **Code quality**: Исправлен deprecated datetime.utcnow() на timezone-aware datetime.now(timezone.utc)
+- ✅ **Code quality**: PostgreSQL — пул соединений (pool_size=5), таймаут SMTP (10с)
+- ✅ **Миграция**: Создан скрипт migrate.py для переноса данных в новую схему
+- ✅ **Email**: HTML-письма с кардиограммой логотипа (PNG), светлая тема
 
-### v0.3.0 (текущий)
-- ✅ Анимированный логотип — кардиограмма → flatline → точка → крест ✕ (цикл 4с)
-- ✅ SVG-логотип на всех auth-страницах (вход, регистрация, сброс пароля)
+### v0.3.0
 - ✅ Drag & drop файлов — перетащите файл в окно для отправки
 - ✅ Система друзей полностью удалена
 - ✅ Полностью переписан README
