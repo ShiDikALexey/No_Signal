@@ -43,7 +43,10 @@
         
         escaped = escaped.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
         
-        escaped = escaped.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        escaped = escaped.replace(/\[(.+?)\]\((.+?)\)/g, function(match, text, url) {
+            if (/^(javascript|data|vbscript):/i.test(url)) return match;
+            return '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + text + '</a>';
+        });
         
         escaped = escaped.replace(/\n/g, '<br>');
         
@@ -110,11 +113,13 @@
     }
 
     function api(method, url, data) {
+        var token = document.querySelector('meta[name="csrf-token"]');
         var opts = {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin'
         };
+        if (token) opts.headers['X-CSRFToken'] = token.content;
         if (data) opts.body = JSON.stringify(data);
         return fetch(url, opts).then(function (r) { return r.json(); });
     }
@@ -1173,6 +1178,8 @@ var typingDebounce = null;
     function uploadFile(file) {
         var formData = new FormData();
         formData.append('file', file);
+        var token = document.querySelector('meta[name="csrf-token"]');
+        if (token) formData.append('csrf_token', token.content);
 
         return fetch('/api/upload', {
             method: 'POST',
@@ -1219,7 +1226,7 @@ var typingDebounce = null;
         lightbox.id = 'lightbox-active';
         lightbox.innerHTML =
             '<button class="lightbox-close" id="lightbox-close">&times;</button>' +
-            '<img src="' + url + '">';
+            '<img src="' + escapeHtml(url) + '">';
         document.body.appendChild(lightbox);
 
         document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -1526,6 +1533,8 @@ var typingDebounce = null;
                 var file = e.target.files[0];
                 var formData = new FormData();
                 formData.append('file', file);
+                var token = document.querySelector('meta[name="csrf-token"]');
+                if (token) formData.append('csrf_token', token.content);
 
                 fetch('/auth/api/profile/avatar-photo', {
                     method: 'POST',
@@ -1759,6 +1768,8 @@ var typingDebounce = null;
 
         var formData = new FormData();
         formData.append('file', audioFile);
+        var token = document.querySelector('meta[name="csrf-token"]');
+        if (token) formData.append('csrf_token', token.content);
 
         fetch('/api/upload', {
             method: 'POST',
