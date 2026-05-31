@@ -11,4 +11,11 @@ dist/
 *.log
 cookies*.txt
 *.spec
-cookies*.txt
+node_modules/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/local.properties
+!android/gradle/wrapper/gradle-wrapper.jar
+package-lock.json

@@ -1,0 +1,16 @@
+{
+  "appId": "com.nosignal.app",
+  "appName": "NoSignal",
+  "webDir": "static",
+  "server": {
+    "url": "https://nosignal.su",
+    "cleartext": false,
+    "hostname": "nosignal-server"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "backgroundColor": "#0d1117"
+    }
+  }
+}

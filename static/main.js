@@ -1090,11 +1090,19 @@ var typingDebounce = null;
         var html = '';
 
         if (filter) {
+            var filterLower = filter.toLowerCase();
             Object.keys(EMOJI_DATA).forEach(function (cat) {
+                var shown = 0;
                 EMOJI_DATA[cat].forEach(function (emoji) {
-                    html += '<button class="emoji-item" data-emoji="' + emoji + '">' + emoji + '</button>';
+                    if (emoji.indexOf(filter) !== -1 || matchEmojiName(emoji, filterLower)) {
+                        html += '<button class="emoji-item" data-emoji="' + emoji + '">' + emoji + '</button>';
+                        shown++;
+                    }
                 });
             });
+            if (!html) {
+                html = '<div class="emoji-category-title">Ничего не найдено</div>';
+            }
         } else if (category) {
             html += '<div class="emoji-category-title">' + category + '</div>';
             EMOJI_DATA[category].forEach(function (emoji) {
@@ -1127,6 +1135,67 @@ var typingDebounce = null;
         input.value = text.substring(0, start) + emoji + text.substring(end);
         input.selectionStart = input.selectionEnd = start + emoji.length;
         input.focus();
+    }
+
+    function matchEmojiName(emoji, lower) {
+        var names = {
+            '\u{1f600}':'grin','\u{1f601}':'beam','\u{1f602}':'joy','\u{1f603}':'smile',
+            '\u{1f604}':'smile','\u{1f605}':'sweat','\u{1f606}':'laugh',
+            '\u{1f609}':'wink','\u{1f60a}':'blush','\u{1f60b}':'yum','\u{1f60c}':'relieved',
+            '\u{1f60d}':'heart eyes','\u{1f60e}':'sunglasses','\u{1f60f}':'smirk',
+            '\u{1f610}':'neutral','\u{1f611}':'expressionless','\u{1f612}':'unamused',
+            '\u{1f613}':'sweat','\u{1f614}':'pensive','\u{1f615}':'confused',
+            '\u{1f616}':'confounded','\u{1f617}':'kiss','\u{1f618}':'kiss',
+            '\u{1f619}':'kiss','\u{1f61a}':'kiss','\u{1f61b}':'tongue','\u{1f61c}':'tongue',
+            '\u{1f61d}':'tongue','\u{1f61e}':'disappointed','\u{1f61f}':'worried',
+            '\u{1f620}':'angry','\u{1f621}':'rage','\u{1f622}':'cry','\u{1f623}':'persevere',
+            '\u{1f624}':'triumph','\u{1f625}':'relieved','\u{1f626}':'frown',
+            '\u{1f627}':'anguish','\u{1f628}':'fear','\u{1f629}':'weary',
+            '\u{1f62a}':'sleepy','\u{1f62b}':'tired','\u{1f62c}':'grimace',
+            '\u{1f62d}':'sob','\u{1f62e}':'open mouth','\u{1f62f}':'hushed',
+            '\u{1f630}':'open mouth','\u{1f631}':'scream','\u{1f632}':'astonished',
+            '\u{1f633}':'flushed','\u{1f634}':'sleep','\u{1f635}':'dizzy',
+            '\u{1f636}':'no mouth','\u{1f637}':'mask','\u{1f638}':'grin',
+            '\u{1f639}':'joy','\u{1f63a}':'smile','\u{1f63b}':'heart eyes',
+            '\u{1f63c}':'joy','\u{1f63d}':'heart','\u{1f63e}':'angry',
+            '\u{1f63f}':'cry','\u{1f640}':'scared','\u{1f641}':'frown','\u{1f642}':'smile',
+            '\u{1f643}':'upside','\u{1f644}':'roll','\u{1f910}':'zipper',
+            '\u{1f911}':'money','\u{1f912}':'thermometer','\u{1f913}':'nerd',
+            '\u{1f914}':'think','\u{1f915}':'head bandage','\u{1f916}':'robot',
+            '\u{1f917}':'hug','\u{1f918}':'rock','\u{1f919}':'call',
+            '\u{1f91a}':'hand','\u{1f91b}':'fist','\u{1f91c}':'fist',
+            '\u{1f91d}':'handshake','\u{1f91e}':'fingers','\u{1f91f}':'love',
+            '\u{1f920}':'cowboy','\u{1f921}':'clown','\u{1f922}':'nauseated',
+            '\u{1f923}':'rolling','\u{1f924}':'drooling','\u{1f925}':'lying',
+            '\u{1f926}':'facepalm','\u{1f927}':'sneeze','\u{1f928}':'raised',
+            '\u{1f929}':'star','\u{1f92a}':'zany','\u{1f92b}':'shush',
+            '\u{1f92c}':'cursing','\u{1f92d}':'hand','\u{1f92e}':'vomiting',
+            '\u{1f92f}':'exploding','\u{1f930}':'pregnant','\u{1f931}':'breast',
+            '\u{1f932}':'palms','\u{1f933}':'selfie','\u{1f934}':'prince',
+            '\u{1f935}':'tuxedo','\u{1f936}':'mother','\u{1f937}':'shrug',
+            '\u{2764}':'heart','\u{1f494}':'broken heart','\u{1f495}':'two hearts',
+            '\u{1f496}':'sparkling heart','\u{1f497}':'growing heart',
+            '\u{1f498}':'arrow heart','\u{1f499}':'blue heart','\u{1f49a}':'green heart',
+            '\u{1f49b}':'yellow heart','\u{1f49c}':'purple heart','\u{1f49d}':'heart',
+            '\u{1f49e}':'revolving hearts','\u{1f49f}':'heart decoration',
+            '\u{1f44d}':'thumbs up','\u{1f44e}':'thumbs down','\u{1f44f}':'clap',
+            '\u{1f64f}':'folded hands','\u{270c}':'peace','\u{1f44c}':'ok',
+            '\u{1f448}':'point left','\u{1f449}':'point right',
+            '\u{1f446}':'point up','\u{1f447}':'point down',
+            '\u{1f525}':'fire','\u{2b50}':'star','\u{1f31f}':'glowing star',
+            '\u{1f4a5}':'boom','\u{1f4a6}':'sweat drops','\u{1f4a8}':'dash',
+            '\u{1f4a9}':'poop','\u{1f4aa}':'flex','\u{1f4ab}':'dizzy',
+            '\u{1f4ad}':'thought balloon','\u{1f4ae}':'white flower',
+            '\u{1f4af}':'100','\u{1f4b0}':'money','\u{1f4b1}':'currency',
+            '\u{1f4b2}':'dollar','\u{1f4b3}':'credit card','\u{1f4b4}':'yen',
+            '\u{1f4b5}':'dollar','\u{1f4b6}':'euro','\u{1f4b7}':'pound',
+            '\u{1f4b8}':'money','\u{1f4b9}':'chart','\u{1f4ba}':'seat',
+            '\u{1f4bb}':'laptop','\u{1f4bc}':'briefcase','\u{1f4bd}':'disk',
+            '\u{1f4be}':'floppy','\u{1f4bf}':'cd','\u{1f4c0}':'dvd',
+        };
+        var name = names[emoji];
+        if (name && name.indexOf(lower) !== -1) return true;
+        return false;
     }
 
     function handleFileSelect(e) {
@@ -1651,7 +1720,16 @@ var typingDebounce = null;
                 recordingCancelled = false;
                 audioChunks = [];
 
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                var mimeType = 'audio/webm;codecs=opus';
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'audio/webm';
+                    if (!MediaRecorder.isTypeSupported(mimeType)) {
+                        mimeType = ''; // browser default
+                    }
+                }
+                var recorderOpts = {};
+                if (mimeType) recorderOpts.mimeType = mimeType;
+                mediaRecorder = new MediaRecorder(stream, recorderOpts);
 
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = audioContext.createAnalyser();
