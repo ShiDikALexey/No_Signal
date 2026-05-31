@@ -10,7 +10,7 @@ from cryptography.fernet import Fernet
 from werkzeug.security import generate_password_hash
 from app import create_app
 from extensions import db, socketio
-from models import User, Chat, Message
+from models import User, Chat, Message, UserChatSettings
 import crypto
 
 
@@ -35,6 +35,7 @@ def app(test_encryption_key):
     with patch.object(crypto, '_fernet', test_fernet):
         app = create_app()
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         app.config['WTF_CSRF_ENABLED'] = False
         app.config['UPLOAD_FOLDER'] = os.path.join(
@@ -283,41 +284,62 @@ class TestChatManagement:
     """Тесты управления чатами: pin, mute, clear."""
 
     def test_toggle_pin_chat(self, app, auth_client_factory, private_chat_fixture):
-        """Закрепление/открепление чата с проверкой флага is_pinned в БД."""
+        """Закрепление/открепление чата с проверкой флага в UserChatSettings."""
         chat_id, user1, user2 = private_chat_fixture
         client = auth_client_factory(user_data=user1)
 
         with app.app_context():
-            assert Chat.query.get(chat_id).is_pinned is False
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings is not None
 
         response = client.post(f'/api/chats/{chat_id}/pin')
         assert response.status_code == 200
         assert response.get_json()['is_pinned'] is True
 
         with app.app_context():
-            assert Chat.query.get(chat_id).is_pinned is True
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings.is_pinned is True
 
         response = client.post(f'/api/chats/{chat_id}/pin')
         assert response.status_code == 200
         assert response.get_json()['is_pinned'] is False
 
         with app.app_context():
-            assert Chat.query.get(chat_id).is_pinned is False
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings.is_pinned is False
 
     def test_toggle_mute_chat(self, app, auth_client_factory, private_chat_fixture):
-        """Включение/выключение уведомлений с проверкой флага is_muted в БД."""
+        """Включение/выключение уведомлений с проверкой флага в UserChatSettings."""
         chat_id, user1, user2 = private_chat_fixture
         client = auth_client_factory(user_data=user1)
 
         with app.app_context():
-            assert Chat.query.get(chat_id).is_muted is False
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings is not None
 
         response = client.post(f'/api/chats/{chat_id}/mute')
         assert response.status_code == 200
         assert response.get_json()['is_muted'] is True
 
         with app.app_context():
-            assert Chat.query.get(chat_id).is_muted is True
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings.is_muted is True
+
+        response = client.post(f'/api/chats/{chat_id}/mute')
+        assert response.status_code == 200
+        assert response.get_json()['is_muted'] is False
+
+        with app.app_context():
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings.is_muted is False
+
+        response = client.post(f'/api/chats/{chat_id}/mute')
+        assert response.status_code == 200
+        assert response.get_json()['is_muted'] is True
+
+        with app.app_context():
+            settings = UserChatSettings.query.filter_by(user_id=user1['id'], chat_id=chat_id).first()
+            assert settings.is_muted is True
 
         response = client.post(f'/api/chats/{chat_id}/mute')
         assert response.status_code == 200
@@ -600,12 +622,12 @@ class TestEncryption:
         with patch.object(crypto, '_fernet', test_fernet):
             assert crypto.encrypt('') == ''
 
-    def test_decrypt_invalid_returns_original(self, test_encryption_key):
-        """Невалидный ciphertext возвращается без изменений."""
+    def test_decrypt_invalid_returns_empty(self, test_encryption_key):
+        """Невалидный ciphertext возвращает пустую строку."""
         test_fernet = Fernet(test_encryption_key)
         with patch.object(crypto, '_fernet', test_fernet):
             invalid = 'not_valid_encrypted_data_12345'
-            assert crypto.decrypt(invalid) == invalid
+            assert crypto.decrypt(invalid) == ''
 
     def test_message_stored_encrypted(self, app, socket_client_factory,
                                        auth_client_factory, private_chat_fixture):
