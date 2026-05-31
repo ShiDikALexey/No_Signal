@@ -77,6 +77,7 @@ class Chat(db.Model):
             name = other.nickname if other else 'Неизвестный'
             avatar_color = other.avatar_color if other else '#888'
             avatar_photo = other.avatar_photo if other else None
+            is_online = other.to_dict()['is_online'] if other else False
 
         last_msg = None
         if self.messages:
@@ -87,7 +88,7 @@ class Chat(db.Model):
                 'sender_nickname': m.sender.nickname,
                 'prefix': prefix,
                 'text': decrypted_text[:50] + ('...' if len(decrypted_text) > 50 else ''),
-                'timestamp': m.timestamp.strftime('%H:%M')
+                'timestamp': m.timestamp.isoformat()
             }
 
         return {
@@ -100,7 +101,8 @@ class Chat(db.Model):
             'last_message': last_msg,
             'is_pinned': self.is_pinned,
             'is_archived': self.is_archived,
-            'is_muted': self.is_muted
+            'is_muted': self.is_muted,
+            'is_online': is_online if not self.is_group else None
         }
 
 
@@ -126,7 +128,7 @@ class Message(db.Model):
             'sender_nickname': self.sender.nickname,
             'sender_avatar_color': self.sender.avatar_color,
             'text': self.text,
-            'timestamp': self.timestamp.strftime('%H:%M'),
+            'timestamp': self.timestamp.isoformat(),
             'full_timestamp': self.timestamp.isoformat(),
             'file_type': self.file_type,
             'file_url': self.file_url,

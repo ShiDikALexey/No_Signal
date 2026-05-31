@@ -27,6 +27,13 @@
         return div.innerHTML;
     }
 
+    function formatTime(isoString) {
+        if (!isoString) return '';
+        var d = new Date(isoString);
+        if (isNaN(d.getTime())) return isoString;
+        return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
     function api(method, url, data) {
         var opts = {
             method: method,
@@ -275,7 +282,7 @@ var typingDebounce = null;
         var letter = chat.name.charAt(0).toUpperCase();
         var lastMsg = chat.last_message;
         var lastMsgText = lastMsg ? lastMsg.prefix + ': ' + lastMsg.text : 'Нет сообщений';
-        var lastMsgTime = lastMsg ? lastMsg.timestamp : '';
+        var lastMsgTime = lastMsg ? formatTime(lastMsg.timestamp) : '';
 
         var badges = '';
         if (chat.is_pinned) badges += '<span class="chat-badge-icon">📌</span>';
@@ -291,7 +298,7 @@ var typingDebounce = null;
         div.innerHTML =
             avatarHtml +
             '<div class="chat-info">' +
-            '<div class="chat-item-name">' + escapeHtml(chat.name) + (chat.is_group ? ' <span class="online-dot" style="background:var(--accent);width:6px;height:6px;"></span>' : '') + '</div>' +
+            '<div class="chat-item-name">' + escapeHtml(chat.name) + ((chat.is_group || (chat.is_online && !chat.is_group)) ? ' <span class="online-dot" style="background:' + (chat.is_group ? 'var(--accent)' : 'var(--success)') + ';width:6px;height:6px;"></span>' : '') + '</div>' +
             '<div class="chat-item-preview">' + escapeHtml(lastMsgText) + '</div>' +
             '</div>' +
             '<div class="chat-item-meta">' +
@@ -368,7 +375,7 @@ var typingDebounce = null;
             '<div>' +
             '<div class="header-chat-name">' + escapeHtml(chat.name) + '</div>' +
             '<div class="header-chat-status" id="header-status">' +
-            (chat.is_group ? chat.members_count + ' участников' : 'offline') +
+            (chat.is_group ? chat.members_count + ' участников' : (chat.is_online ? 'В сети' : 'Не в сети')) +
             '</div>' +
             '</div>' +
             '</div>';
@@ -442,7 +449,7 @@ var typingDebounce = null;
             div.innerHTML =
                 (msg.text ? '<div class="msg-text">' + escapeHtml(msg.text) + '</div>' : '') +
                 fileHtml +
-                '<div class="msg-time">' + escapeHtml(msg.timestamp) + statusHtml + '</div>';
+                '<div class="msg-time">' + formatTime(msg.timestamp) + statusHtml + '</div>';
         } else {
             div.className = 'message other' + groupedClass;
             var senderHtml = isGrouped ? '' : '<div class="msg-sender" style="color:' + escapeHtml(msg.sender_avatar_color) + '">' + escapeHtml(msg.sender_nickname) + '</div>';
@@ -450,7 +457,7 @@ var typingDebounce = null;
                 senderHtml +
                 (msg.text ? '<div class="msg-text">' + escapeHtml(msg.text) + '</div>' : '') +
                 fileHtml +
-                '<div class="msg-time">' + escapeHtml(msg.timestamp) + '</div>';
+                '<div class="msg-time">' + formatTime(msg.timestamp) + '</div>';
         }
 
         container.appendChild(div);
@@ -630,10 +637,23 @@ var typingDebounce = null;
 
     function onUserOnline(data) {
         onlineUsers.add(data.user_id);
+        updateChatOnlineStatus(data.user_id, true);
     }
 
     function onUserOffline(data) {
         onlineUsers.delete(data.user_id);
+        updateChatOnlineStatus(data.user_id, false);
+    }
+
+    function updateChatOnlineStatus(userId, isOnline) {
+        var chat = chats.find(function(c) { return !c.is_group; });
+        if (chat && currentChatId === chat.id) {
+            var statusEl = document.getElementById('header-status');
+            if (statusEl) {
+                statusEl.textContent = isOnline ? 'В сети' : 'Не в сети';
+            }
+        }
+        renderChatList(document.getElementById('search-input').value.trim().toLowerCase());
     }
 
     // ========== Modal ==========
@@ -1304,6 +1324,12 @@ var typingDebounce = null;
         }
     }
 
+    function sanitizeStatus(status) {
+        if (!status) return '';
+        if (status.indexOf('@') !== -1) return '';
+        return status;
+    }
+
     function renderProfileDropdown() {
         var avatar = document.getElementById('dropdown-avatar');
         var name = document.getElementById('dropdown-name');
@@ -1316,7 +1342,7 @@ var typingDebounce = null;
             avatar.textContent = currentUser.nickname.charAt(0).toUpperCase();
         }
         name.textContent = currentUser.nickname;
-        status.textContent = currentUser.status || 'Нет статуса';
+        status.textContent = sanitizeStatus(currentUser.status) || 'Нет статуса';
     }
 
     function showChangeNickname() {
