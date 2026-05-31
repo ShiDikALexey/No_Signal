@@ -470,3 +470,25 @@ def admin_delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({'success': True})
+
+
+@auth.route('/api/admin/users/<int:user_id>', methods=['GET'])
+@admin_required
+def admin_user_detail(user_id):
+    user = User.query.get_or_404(user_id)
+    is_online = (datetime.now(timezone.utc) - user.last_seen.replace(tzinfo=timezone.utc)).total_seconds() < 180
+    message_count = Message.query.filter_by(sender_id=user.id).count()
+    return jsonify({
+        'id': user.id,
+        'email': user.email,
+        'nickname': user.nickname,
+        'avatar_color': user.avatar_color,
+        'avatar_photo': user.avatar_photo,
+        'status': user.status,
+        'is_admin': user.is_admin,
+        'is_verified': user.is_verified,
+        'last_seen': user.last_seen.strftime('%d.%m.%Y %H:%M'),
+        'is_online': is_online,
+        'chat_count': len(user.chats),
+        'message_count': message_count
+    })

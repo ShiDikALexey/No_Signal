@@ -2124,7 +2124,8 @@ var typingDebounce = null;
             '</div></div>' +
             '<hr style="border-color:var(--border);margin:20px 0;">' +
             '<h4>👥 Пользователи (<span id="admin-users-count">...</span>)</h4>' +
-            '<div id="admin-users-table-wrapper" style="max-height:300px;overflow-y:auto;"></div>';
+            '<div id="admin-users-table-wrapper" style="max-height:300px;overflow-y:auto;"></div>' +
+            '<div id="admin-user-profile" class="admin-profile-card hidden"></div>';
 
         overlay.classList.remove('hidden');
 
@@ -2159,7 +2160,8 @@ var typingDebounce = null;
                     '<td>' + escapeHtml(u.email) + '</td>' +
                     '<td>' + (u.is_admin ? '👑 Админ' : '👤') + '</td>' +
                     '<td>' + escapeHtml(u.last_seen) + '</td>' +
-                    '<td><button class="admin-user-delete" data-uid="' + u.id + '" data-name="' + escapeHtml(u.nickname) + '">Удалить</button></td>' +
+                    '<td><button class="admin-user-view" data-uid="' + u.id + '" title="Просмотр профиля">👁</button>' +
+                    '<button class="admin-user-delete" data-uid="' + u.id + '" data-name="' + escapeHtml(u.nickname) + '">Удалить</button></td>' +
                     '</tr>';
             });
             html += '</tbody></table>';
@@ -2178,6 +2180,50 @@ var typingDebounce = null;
                     });
                 });
             });
+
+            document.querySelectorAll('.admin-user-view').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var uid = this.dataset.uid;
+                    api('GET', '/auth/api/admin/users/' + uid).then(function(user) {
+                        showAdminUserProfile(user);
+                    });
+                });
+            });
+        });
+    }
+
+    function showAdminUserProfile(user) {
+        document.getElementById('admin-users-table-wrapper').classList.add('hidden');
+        var profileDiv = document.getElementById('admin-user-profile');
+        profileDiv.classList.remove('hidden');
+
+        var statusClass = user.is_online ? 'online' : 'offline';
+        var statusText = user.is_online ? 'В сети' : 'Не в сети';
+        var avatarHtml = user.avatar_photo
+            ? '<img src="' + escapeHtml(user.avatar_photo) + '" alt="">'
+            : user.nickname.charAt(0).toUpperCase();
+
+        profileDiv.innerHTML =
+            '<div class="admin-profile-header">' +
+            '<div class="admin-profile-avatar" style="background:' + escapeHtml(user.avatar_color) + '">' + avatarHtml + '</div>' +
+            '<div>' +
+            '<div class="admin-profile-name">' + escapeHtml(user.nickname) + '</div>' +
+            '<div class="admin-profile-email">' + escapeHtml(user.email) + '</div>' +
+            '<div class="admin-profile-status ' + statusClass + '">' + statusText + '</div>' +
+            '</div></div>' +
+            '<div class="admin-profile-grid">' +
+            '<div class="admin-profile-field"><div class="admin-profile-field-label">Роль</div><div class="admin-profile-field-value">' + (user.is_admin ? 'Администратор' : 'Пользователь') + '</div></div>' +
+            '<div class="admin-profile-field"><div class="admin-profile-field-label">Email проверен</div><div class="admin-profile-field-value">' + (user.is_verified ? 'Да' : 'Нет') + '</div></div>' +
+            '<div class="admin-profile-field"><div class="admin-profile-field-label">Чатов</div><div class="admin-profile-field-value">' + user.chat_count + '</div></div>' +
+            '<div class="admin-profile-field"><div class="admin-profile-field-label">Сообщений</div><div class="admin-profile-field-value">' + user.message_count + '</div></div>' +
+            '<div class="admin-profile-field"><div class="admin-profile-field-label">Статус</div><div class="admin-profile-field-value">' + escapeHtml(user.status || 'Не указан') + '</div></div>' +
+            '<div class="admin-profile-field"><div class="admin-profile-field-label">Был в сети</div><div class="admin-profile-field-value">' + escapeHtml(user.last_seen) + '</div></div>' +
+            '</div>' +
+            '<button class="admin-profile-back" id="admin-profile-back">← Назад к списку</button>';
+
+        document.getElementById('admin-profile-back').addEventListener('click', function() {
+            document.getElementById('admin-users-table-wrapper').classList.remove('hidden');
+            profileDiv.classList.add('hidden');
         });
     }
 
