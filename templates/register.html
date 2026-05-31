@@ -42,7 +42,7 @@
             {% endif %}
         {% endwith %}
         <form method="POST" class="auth-form" id="register-form">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" placeholder="your@email.com" value="{{ email }}" required autofocus>
