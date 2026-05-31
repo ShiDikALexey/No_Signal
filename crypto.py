@@ -15,7 +15,7 @@ def get_or_create_key():
             return f.read()
 
     import secrets
-    key = secrets.token_hex(16).encode('utf-8')
+    key = Fernet.generate_key()
     with open(KEY_FILE, 'wb') as f:
         f.write(key)
     print('WARNING: ENCRYPTION_KEY not set. Generated temporary key. Set in .env for production.', file=sys.stderr)
