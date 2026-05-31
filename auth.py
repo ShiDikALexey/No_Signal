@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from urllib.parse import urlparse
-from models import User, AVATAR_COLORS, Chat, Message, SystemAnnouncement
+from models import User, AVATAR_COLORS, Chat, Message, SystemAnnouncement, UserChatSettings
 from extensions import db, limiter
 from config import BASE_DIR
 from mail import send_password_reset_email, send_verification_email
@@ -461,12 +461,16 @@ def admin_delete_user(user_id):
     if user_id == current_user.id:
         return jsonify({'error': 'Нельзя удалить самого себя'}), 400
     user = User.query.get_or_404(user_id)
+
+    Message.query.filter_by(sender_id=user_id).delete()
+    UserChatSettings.query.filter_by(user_id=user_id).delete()
+
     user_chats = Chat.query.filter(Chat.members.any(User.id == user_id)).all()
     for chat in user_chats:
-        Message.query.filter_by(chat_id=chat.id).delete()
         chat.members.remove(user)
         if len(chat.members) == 0:
             db.session.delete(chat)
+
     db.session.delete(user)
     db.session.commit()
     return jsonify({'success': True})
